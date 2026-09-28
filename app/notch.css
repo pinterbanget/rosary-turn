@@ -1,0 +1,75 @@
+/* Notch surface: the reader as a black card that grows out of the MacBook notch
+   (or drops from the top of the screen on Windows). The host draws the black
+   shape on macOS, so the page itself stays transparent there. */
+@font-face { font-family: "Amiri Quran"; src: url("fonts/AmiriQuran.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Manrope"; src: url("fonts/Manrope.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "DM Mono"; src: url("fonts/DMMono-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+:root {
+  --ink: #fff8e8; --muted: #93aaa5; --soft: rgba(255, 248, 232, 0.1);
+  --teal: #4ee1d2; --brass: #f2bd51; --gold-ink: #3b2204;
+  --nw: 0px; --nh: 32px; --ayah-size: 25px;
+  --mono: "DM Mono", ui-monospace, Menlo, monospace;
+  --sans: "Manrope", system-ui, -apple-system, sans-serif;
+  --quran: "Amiri Quran", serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: transparent; color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow: hidden; }
+body.host-win { background: #000; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+.n-card { display: flex; flex-direction: column; padding: 0 18px 12px; user-select: none; -webkit-user-select: none; }
+
+/* The strip level with the notch: status on the left, the notch itself in the
+   middle (nothing is drawn under the camera), the reference on the right. */
+.n-top { height: var(--nh); display: flex; align-items: center; gap: 10px; font-size: 11.5px; font-weight: 600; }
+.n-gap { flex: 0 0 var(--nw); }
+.n-status { flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.n-ref { flex: 1; min-width: 0; text-align: right; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n-dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 999px; border: 1.5px solid var(--muted); }
+[data-status="working"] .n-status { color: var(--ink); }
+[data-status="working"] .n-dot { border: none; background: var(--teal); animation: pulse 1.8s ease-out infinite; }
+[data-status="needs_you"] .n-dot { border: none; background: var(--brass); }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(78, 225, 210, 0.5); } 70%, 100% { box-shadow: 0 0 0 6px rgba(78, 225, 210, 0); } }
+
+/* The alert strip slides in inside the card; reading is never cut off. */
+.n-alert { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), margin 0.28s; }
+.n-alert.show { grid-template-rows: 1fr; margin-top: 6px; }
+.n-alert-inner { overflow: hidden; min-height: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 12px; padding: 0 10px; background: rgba(78, 225, 210, 0.12); }
+.n-alert.show .n-alert-inner { padding: 7px 8px 7px 12px; }
+.n-alert[data-kind="needs_you"] .n-alert-inner { background: rgba(242, 189, 81, 0.16); }
+.n-alert-title { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n-alert-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.n-back { height: 26px; padding: 0 11px; border: none; border-radius: 999px; background: var(--brass); color: var(--gold-ink); font-size: 12px; font-weight: 700; cursor: pointer; }
+.n-alert[data-kind="done"] .n-back { background: var(--teal); color: #042a26; }
+.n-key { font-family: var(--mono); font-size: 10px; color: var(--muted); border: 1px solid var(--soft); border-radius: 5px; padding: 1px 5px; }
+
+.n-stage { max-height: 250px; overflow-y: auto; padding: 8px 4px 4px; text-align: center; scrollbar-width: thin; }
+.n-surah { display: flex; align-items: baseline; justify-content: center; gap: 8px; color: var(--muted); }
+.n-surah [lang="ar"] { font-family: var(--quran); font-size: 15px; line-height: 1.6; }
+.n-surah-en { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; }
+
+.n-start { margin-top: 8px; display: grid; gap: 8px; justify-items: center; }
+.n-start-title { font-size: 12.5px; font-weight: 700; }
+.n-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.n-chip { height: 26px; padding: 0 11px; border: 1px solid var(--soft); border-radius: 999px; background: rgba(255, 248, 232, 0.06); font-size: 12px; font-weight: 600; cursor: pointer; }
+.n-chip:hover { background: rgba(255, 248, 232, 0.14); }
+.n-chip:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.n-ayah { margin: 2px 0 0; font-family: var(--quran); font-size: var(--ayah-size); line-height: 2; }
+.n-ayah .basmala { display: block; font-size: 0.8em; color: var(--muted); }
+.n-end { color: var(--brass); white-space: nowrap; }
+.n-error { margin: 8px 0 0; font-size: 12.5px; line-height: 1.5; color: #ffb4a8; }
+
+.n-foot { margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+.n-counter { flex: 1; text-align: center; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.n-btn { width: 30px; height: 26px; border: 1px solid var(--soft); border-radius: 999px; background: rgba(255, 248, 232, 0.06); cursor: pointer; font-size: 13px; line-height: 1; }
+.n-btn:hover { background: rgba(255, 248, 232, 0.12); }
+.n-quiet { border-color: transparent; background: transparent; color: var(--muted); }
+.n-btn:focus-visible, .n-back:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+.n-ayah.swap { animation: swap 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes swap { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .n-alert, .n-ayah.swap, [data-status="working"] .n-dot { transition: none; animation: none; }
+}

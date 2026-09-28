@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Quran Turn notch</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="notch.css">
+<script src="/data/quran-data.js"></script>
+<script type="module" src="notch.js"></script>
+</head>
+<body>
+<main class="n-card" id="card" data-status="idle">
+  <!-- Level with the notch: who's working on the left, where you are on the right. -->
+  <header class="n-top" id="top">
+    <span class="n-status" id="status" title=""><i class="n-dot" aria-hidden="true"></i><span id="status-text">Quran Turn</span></span>
+    <span class="n-gap" aria-hidden="true"></span>
+    <span class="n-ref" id="ref"></span>
+  </header>
+
+  <div class="n-alert" id="alert" role="status">
+    <div class="n-alert-inner">
+      <span class="n-alert-title" id="alert-title"></span>
+      <span class="n-alert-actions"><button type="button" class="n-back" id="back">Back to Claude</button><kbd class="n-key" id="back-key">space</kbd></span>
+    </div>
+  </div>
+
+  <!-- First run: choose where to start, right here in the notch. -->
+  <div class="n-start" id="start" hidden>
+    <span class="n-start-title">Where would you like to start?</span>
+    <div class="n-chips" id="chips"></div>
+  </div>
+
+  <section class="n-stage" id="stage">
+    <div class="n-surah"><span id="surah-ar" lang="ar" dir="rtl"></span><span class="n-surah-en" id="surah-en"></span></div>
+    <p class="n-ayah" lang="ar" dir="rtl"><span id="ayah-text"></span> <span class="n-end" id="ayah-end" aria-hidden="true"></span></p>
+    <p class="n-error" id="error" hidden></p>
+  </section>
+
+  <footer class="n-foot">
+    <button type="button" class="n-btn" id="next" title="Next ayah (←)" aria-label="Next ayah">←</button>
+    <span class="n-counter" id="counter"></span>
+    <button type="button" class="n-btn n-quiet" id="full" title="Open the full reader: search, surah list, Go to (g)" aria-label="Open the full reader">⤢</button>
+    <button type="button" class="n-btn" id="prev" title="Previous ayah (→)" aria-label="Previous ayah">→</button>
+  </footer>
+</main>
+</body>
+</html>

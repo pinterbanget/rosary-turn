@@ -2,7 +2,9 @@
 
 **Read the Qur'an while your coding agent thinks.**
 
-Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your agent a prompt, a quiet reader window opens at the exact ayah you left off. Press **Float** and the reader becomes a small ayah card that stays on top of every window, right beside your agent. When the agent needs you, a strip slides into the card and you go back with one press of Space. When the turn ends, your place is saved automatically.
+Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your agent a prompt, the reader **comes down out of your Mac's notch** like a curtain, open at the exact ayah you left off. When the agent needs you, a strip slides in and one press of Space takes you back. When the turn ends, your place is saved and the curtain folds back into the notch.
+
+**The notch is the default on macOS, whichever agent you use.** It works the same for Claude Code (terminal or desktop app) and Codex (CLI or app), because it follows the agent's hooks rather than a particular app. On a Mac without a notch it comes out of the middle of the menu bar. On Windows and Linux the reader opens in its own window. A frameless Windows version that drops from the top of the screen is available to try (see [The notch](#the-notch-default-on-macos)).
 
 <p align="center">
   <img src="docs/reader-working.png" width="260" alt="Reader while Claude is working, showing Al-Baqara 2:155">
@@ -75,30 +77,57 @@ git clone https://github.com/rzrizaldy/quran-turn
 claude --plugin-dir ./quran-turn
 ```
 
-Then send any prompt. The reader opens as a small app window if Chrome, Edge, Brave or Chromium is installed, and in your default browser otherwise. It opens once and is reused, so later turns never open another tab.
+Then send any prompt. On macOS the reader comes out of the notch. Elsewhere it opens as a small app window if Chrome, Edge, Brave or Chromium is installed, and in your default browser otherwise. It opens once and is reused, so later turns never open another tab.
 
 ## How it works
 
 ```
- you send a prompt ─▶ UserPromptSubmit ─▶ reader opens (or grows back) · "Codex/Claude is working" · counts ayat
+ you send a prompt ─▶ UserPromptSubmit ─▶ the curtain comes out of the notch · "● Claude" or "● Codex" · counts ayat
                                             │
-   agent asks approval ─▶ PermissionRequest ─▶ reader shrinks to a small strip · your agent comes to the front
+   agent asks approval ─▶ PermissionRequest ─▶ "Claude needs you" slides in · Space takes you back, the curtain folds up
                                             │
-     you approve, tool runs ─▶ PostToolUse ─▶ reader grows back to where you were reading
+     you approve, tool runs ─▶ PostToolUse ─▶ the curtain comes back down where you were reading
                                             │
-             turn ends ─▶ Stop ─▶ place saved automatically · reader shrinks · your agent comes to the front
+             turn ends ─▶ Stop ─▶ place saved automatically · "Saved at 2:157" · the curtain folds into the notch
 ```
+
+With the reader window instead of the notch (`quran-turn surface window`, and on Windows or Linux), the window shrinks to a small strip and your agent comes to the front at the same moments.
 
 - **Your place saves itself.** Every ayah you move is written to disk at once, and the Stop hook closes the turn. You never need to run a command; `quran-turn log` is only there if you're curious.
 - **Back to your agent in one key.** When the agent needs you or is done, the strip shows **Back to Claude** (or Codex). Click it or press **Space**, and the app you're running the agent in (the Claude desktop app, Codex, Terminal, iTerm, VS Code…) comes to the front.
-- **A side window, never full screen.** The reader opens at 460×740, shrinks to a 380×112 strip, and grows back to your size, capped so it never returns full screen. Turn the automatic shrinking off with `quran-turn switch off`. Window switching is macOS-only for now, and the first time, macOS asks to let your agent's app control your browser.
+- **The window, never full screen.** With the window surface, the reader opens at 460×740, shrinks to a 380×112 strip, and grows back to your size, capped so it never returns full screen. Turn the automatic shrinking off with `quran-turn switch off`. Window switching is macOS-only for now, and the first time, macOS asks to let your agent's app control your browser.
 - **Hooks:** they call `bin/quran-turn hook <event>`, print nothing (agents read hook output as context), always exit 0, and take about 40 ms.
 - **Reader server:** a tiny local server on `127.0.0.1:47114` serves the reader. The first hook starts it, and it exits after 30 minutes with no reader connected.
 - **One hooks file for both agents:** Codex provides `CLAUDE_PLUGIN_ROOT` as an alias and also sets `PLUGIN_ROOT`, which is how Quran Turn tells the two apart.
 
+## The notch (default on macOS)
+
+The reader lives in your MacBook's notch. It is black like the notch itself, so while nothing is happening you don't see it at all.
+
+- **You send a prompt** (from any agent): the curtain widens just past the notch and drops into an ayah card, with a soft spring at the end. Beside the notch you see who is working (**● Claude** or **● Codex**) and where you are (`2:155`).
+- **Read:** click the card, then use ← / →, or the arrows on the card. Until you click it, your typing stays with your agent.
+- **The agent needs you:** *Claude needs you · Back to Claude* slides into the card without cutting off your ayah. Press **Space** when you're ready: your agent comes to the front and the curtain folds up. It comes back down when the agent resumes.
+- **The turn ends:** *Saved at 2:157 · 4 ayat* shows for a moment, then the curtain folds back into the notch. If your mouse is still on the card, it waits until you move away, so you're never cut off mid-ayah.
+- **Anytime:** hover over the notch to peek at your ayah, and move away to fold it again. **Esc** folds it for the rest of the turn. **⤢** (or **G**) opens the full reader, with search, the surah list and Go to.
+- **First time:** the notch asks *where would you like to start?* with one-tap starts (Al-Fatihah, Juz 'Amma, Al-Kahf, Yasin, Al-Mulk) and **Search…** for anything else.
+
+**Setup:** nothing. The first time the notch opens, Quran Turn compiles its small macOS helper ([`native/QuranNotch.swift`](native/QuranNotch.swift), about 400 lines you can read) on your Mac with the Swift compiler from Apple's Command Line Tools. That takes a few seconds, once. No prebuilt binary ships with the plugin, and the helper needs no permissions. If the Command Line Tools are missing (`xcode-select --install` adds them), or you're on macOS 11 or older, the reader opens in its window instead.
+
+The helper only draws and animates the black shape. The reading itself is the same page as everywhere else, so the Qur'an text still goes through the SHA-256 check and `textContent`-only rendering.
+
+**Choose where the reader shows up:**
+
+```bash
+quran-turn surface notch     # the default on macOS
+quran-turn surface window    # the reader window (with Float mode)
+quran-turn surface auto      # notch on macOS, window elsewhere
+```
+
+**Windows (experimental).** Windows has no notch, so `quran-turn surface notch` makes the reader drop from the top-centre of the screen instead. It runs in a Microsoft Edge app window with its title bar and frame removed, always on top, and uses nothing beyond what ships with Windows 10/11 ([`native/notch-win.ps1`](native/notch-win.ps1)). It is opt-in while it gets tested on real machines, so please [open an issue](https://github.com/rzrizaldy/quran-turn/issues) with what you see.
+
 ## Float mode
 
-Press **Float** in the reader (or the **F** key) and the reader becomes a small ayah card that stays **on top of every app**, including the Claude desktop app, Codex, Terminal and your editor. Drag it wherever you like, and it stays there.
+Float belongs to the window surface (`quran-turn surface window`). Press **Float** in the reader (or the **F** key) and the reader becomes a small ayah card that stays **on top of every app**, including the Claude desktop app, Codex, Terminal and your editor. Drag it wherever you like, and it stays there.
 
 - **While the agent works:** read with ← / →. The card never moves on its own and never steals focus.
 - **When the agent needs you:** a strip slides into the card: *Claude needs you · Back to Claude*. Nothing jumps and your reading isn't cut off. Press **Space** (or Enter) when you're ready, and your agent comes to the front.
@@ -109,7 +138,7 @@ Float uses Chrome's Document Picture-in-Picture, so it needs **Chrome, Edge or B
 
 ## Start anywhere, find anything
 
-The first time the reader opens, it asks **where you'd like to start**. After that, press **G** (or click the counter at the bottom) to go anywhere. One search box understands:
+The first time the reader opens, in the notch or the window, it asks **where you'd like to start**. After that, press **G** (or click the counter at the bottom of the window) to go anywhere. One search box understands:
 
 | Type | Goes to |
 |---|---|
@@ -163,7 +192,7 @@ Once the updated plugin is loaded and its hooks are trusted, the next prompt swa
 
 > Coming from **v0.4.0 or earlier**? Refresh or close the reader window once after updating, because the self-reload arrived in v0.4.1. From then on it's automatic.
 
-**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.6.0"). Click it and the site tells you whether a newer version exists.
+**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.7.0"). Click it and the site tells you whether a newer version exists.
 
 ## Using the reader
 
@@ -176,10 +205,13 @@ Once the updated plugin is loaded and its hooks are trusted, the next prompt swa
 | `+` / `-` | Text size |
 | `d` | Toggle light / dark |
 | `f` | **Float**: the always-on-top ayah card |
-| `esc` | Close the float card |
+| `esc` | Close the float card, or fold the notch for this turn |
+
+In the notch, `←` / `→`, `space`, `g` and `esc` work the same once you've clicked the card.
 
 ```
-quran-turn open        open the reader window
+quran-turn surface <s> notch · window · auto          → where the reader shows up
+quran-turn open        open the full reader window
 quran-turn where       your current position        → Al-Baqara 2:157  البقرة
 quran-turn start <…>   start from anywhere          → quran-turn start juz 30
 quran-turn log [n]     your last n turns            → Sep 22, 8:42 PM  2:153 → 2:157  4 ayat  claude

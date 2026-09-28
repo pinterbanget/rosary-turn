@@ -413,6 +413,82 @@ describe('server', () => {
     await assert.rejects(fetch(base + '/api/health'), 'port is free for the new version');
   });
 
+  test('notch surface: comes out for a new turn, never moves windows, Open still gives the full reader', async () => {
+    const win = {
+      ...fakeWin(),
+      notchSupported: () => true,
+      notchBuild: () => 'abc123',
+      async openNotch(u) { this.calls.push(['notch', u]); return true; },
+    };
+    const { srv, base, post } = await boot(win);
+    const settle = () => new Promise((r) => setTimeout(r, 50));
+    const ctrl = new AbortController();
+    try {
+      const host = 'com.anthropic.claudefordesktop';
+      await post('/api/hook', { event: 'start', agent: 'claude', host, session_id: 'n' });
+      await settle();
+      assert.deepEqual(win.calls, [['notch', `${base}/`]], 'the notch, not a browser window');
+
+      const snap = await (await fetch(base + '/api/state')).json();
+      assert.equal(snap.surface, 'notch');
+      assert.equal(snap.notchBuild, 'abc123');
+
+      // The notch page connects; the hooks now leave every window alone.
+      const sse = await fetch(base + '/api/events?surface=notch', { signal: ctrl.signal });
+      win.calls.length = 0;
+      for (const event of ['needs-you', 'resume', 'stop']) await post('/api/hook', { event, session_id: 'n' });
+      await post('/api/hook', { event: 'start', agent: 'codex', session_id: 'n2' }); // any agent
+      await settle();
+      assert.deepEqual(win.calls, [], 'no collapse, no focus, no second notch');
+
+      // ⤢ / `quran-turn open`: the full reader window, even with the notch up.
+      assert.equal((await (await post('/api/open', {})).json()).opened, true);
+      assert.deepEqual(win.calls, [['open', `${base}/`]]);
+
+      // `quran-turn surface window` goes back to the window.
+      const { writeJson, readJson } = await state;
+      writeJson('config.json', { ...readJson('config.json'), surface: 'window' });
+      assert.equal((await (await fetch(base + '/api/state')).json()).surface, 'window');
+      sse.body?.cancel().catch(() => {});
+    } finally {
+      ctrl.abort();
+      srv.close();
+    }
+  });
+
+  test('notch surface on Windows: the host long-polls the page’s open/close/height', async () => {
+    const { srv, base, post } = await boot(fakeWin());
+    try {
+      const waiting = fetch(base + '/api/surface?since=0').then((r) => r.json());
+      await new Promise((r) => setTimeout(r, 30));
+      await post('/api/surface', { type: 'height', value: 188, chrome: 32 });
+      const s1 = await waiting;
+      assert.deepEqual([s1.seq, s1.open, s1.height, s1.chrome], [1, false, 188, 32]);
+      await post('/api/surface', { type: 'open' });
+      const s2 = await (await fetch(base + '/api/surface?since=1')).json();
+      assert.deepEqual([s2.seq, s2.open, s2.height], [2, true, 188]);
+      await post('/api/surface', { type: 'height', value: 99999 });
+      assert.equal((await (await fetch(base + '/api/surface?since=2')).json()).height, 600, 'clamped');
+      assert.equal((await post('/api/surface', { type: 'open' }, { origin: 'https://evil.example' })).status, 403);
+    } finally {
+      srv.close();
+    }
+  });
+
+  test('the notch page ships and uses the one verified text path', () => {
+    const js = readFileSync(join(ROOT, 'app/notch.js'), 'utf8');
+    assert.match(js, /from '\.\/text\.js'/);
+    assert.ok(!/innerHTML/.test(js), 'no innerHTML in the notch page');
+    assert.ok(!/innerHTML/.test(readFileSync(join(ROOT, 'app/text.js'), 'utf8')));
+  });
+
+  test('the macOS notch host type-checks', { skip: process.platform !== 'darwin' }, () => {
+    let swiftc = '';
+    try { swiftc = execFileSync('xcrun', ['--find', 'swiftc'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch {}
+    if (!swiftc) return; // no Command Line Tools here
+    execFileSync('xcrun', ['swiftc', '-typecheck', join(ROOT, 'native/QuranNotch.swift')], { stdio: 'pipe', timeout: 120_000 });
+  });
+
   test('only real bundle ids are ever passed to `open -b`', async () => {
     const { validBundleId } = await import('../src/window.mjs');
     assert.ok(validBundleId('com.anthropic.claudefordesktop'));

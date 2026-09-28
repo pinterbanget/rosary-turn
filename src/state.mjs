@@ -2,7 +2,8 @@
 //   state.json      where you are:           {surah, ayah, updated_at}
 //   agent.json      what the agent is doing: {status, agent, host, session_id, turn_started_at, turn_from, ayat, last_turn}
 //   sessions.jsonl  one line per finished turn
-//   config.json     {enabled, autoOpen, autoSwitch}
+//   config.json     {enabled, autoOpen, autoSwitch, surface}
+//                   surface: "auto" (notch on macOS, window elsewhere) | "notch" | "window"
 // Delete any of them at any time; defaults come back.
 import { appendFileSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -13,7 +14,7 @@ export const home = () => process.env.QURAN_TURN_HOME || join(homedir(), '.quran
 const DEFAULTS = {
   'state.json': { surah: 1, ayah: 1, updated_at: null },
   'agent.json': { status: 'idle' },
-  'config.json': { enabled: true, autoOpen: true, autoSwitch: true },
+  'config.json': { enabled: true, autoOpen: true, autoSwitch: true, surface: 'auto' },
 };
 
 export function readJson(name) {

@@ -1,6 +1,6 @@
 {
   "name": "quran-turn",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Read the Qur'an while your coding agent takes its turn. Local-first, offline, no account.",
   "license": "MIT",
   "author": "Rizaldy",
@@ -40,6 +40,7 @@
     ".claude-plugin",
     ".codex-plugin",
     "scripts",
+    "native",
     "CHANGELOG.md"
   ]
 }

@@ -4,6 +4,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildSearchIndex, resolveQuery } from '../app/quran-core.js';
 import { VERSION, formatRef, loadMeta, loadQuran } from '../src/quran.mjs';
+import { buildMacHost, notchSupported } from '../src/notch.mjs';
 import { DEFAULT_PORT, startServer } from '../src/server.mjs';
 import { applyHook, home, logError, readJson, readSessions, setPosition, writeJson } from '../src/state.mjs';
 
@@ -138,7 +139,8 @@ function statusLine() {
 
 const HELP = `quran-turn — read the Qur'an while your coding agent takes its turn
 
-  quran-turn open           open the reader window
+  quran-turn open           open the full reader window
+  quran-turn surface <s>    where the reader shows up: notch · window · auto
   quran-turn where          your current position
   quran-turn start <where>  start reading from: 2:255 · juz 30 · kahfi · 36 · hal 50 · Arabic words
   quran-turn log [n]        the last n turns (default 10)
@@ -212,6 +214,38 @@ try {
       writeJson('config.json', { ...readJson('config.json'), enabled: cmd === 'on' });
       console.log(cmd === 'on' ? 'quran-turn hooks enabled.' : 'quran-turn hooks paused. Run `quran-turn on` to resume.');
       break;
+    case 'surface': {
+      const want = rest[0];
+      const config = readJson('config.json');
+      if (!['auto', 'notch', 'window'].includes(want)) {
+        console.log(`Reader surface: ${config.surface || 'auto'}. Choose one: quran-turn surface notch | window | auto`);
+        break;
+      }
+      if (want !== 'window' && !notchSupported({ explicit: want === 'notch' })) {
+        if (want === 'notch') {
+          throw new Error(process.platform === 'darwin'
+            ? 'the notch needs macOS 12+ and the Swift compiler. Install it with `xcode-select --install`, then try again.'
+            : 'the notch reader is available on macOS (and, experimentally, Windows).');
+        }
+      }
+      if (process.platform === 'darwin' && want !== 'window' && notchSupported()) {
+        console.log('Preparing the notch reader (the first time compiles it on this Mac)…');
+        await buildMacHost();
+      }
+      writeJson('config.json', { ...config, surface: want });
+      // A running reader switches over now: the notch steps aside for the
+      // window, or comes out for your next turn.
+      try {
+        await call('/api/refresh', {});
+        if (want !== 'window') await call('/api/surface/relaunch', {});
+      } catch {}
+      console.log(want === 'window'
+        ? 'The reader opens in its own window.'
+        : want === 'notch' || process.platform === 'darwin'
+          ? 'The reader comes out of the notch while your agent works.'
+          : 'The reader opens in its own window (auto).');
+      break;
+    }
     case 'switch': {
       const on = rest[0] !== 'off';
       writeJson('config.json', { ...readJson('config.json'), autoSwitch: on });

@@ -324,3 +324,56 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
   #changelog > summary .fold-chev { grid-column: 3; grid-row: 1 / span 2; }
 }
 .fold-body { padding-top: 16px; }
+
+/* ── Hero: the notch reader (mirrors app/notch.css) ────────────────────────── */
+.notch-demo { margin: 0; }
+.nd-screen {
+  position: relative; height: 330px; border-radius: 20px; overflow: hidden; border: 1px solid var(--line);
+  background:
+    radial-gradient(120% 90% at 15% 110%, rgba(35, 156, 132, 0.55), transparent 60%),
+    radial-gradient(90% 80% at 95% 100%, rgba(242, 189, 81, 0.5), transparent 60%),
+    linear-gradient(180deg, #cfe6dd, #f3e6c6);
+  box-shadow: 0 30px 80px -30px rgba(23, 59, 57, 0.35);
+}
+.nd-menubar {
+  height: 26px; padding: 0 12px; display: flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font: 600 11px var(--sans); color: #173b39;
+}
+.nd-apple { width: 10px; height: 11px; border-radius: 3px 3px 5px 5px; background: #173b39; opacity: 0.8; }
+.nd-menu { width: 34px; height: 6px; border-radius: 3px; background: rgba(23, 59, 57, 0.35); }
+.nd-spacer { flex: 1; }
+.nd-icon { width: 12px; height: 8px; border-radius: 2px; background: rgba(23, 59, 57, 0.45); }
+
+/* The curtain: from notch size to the card and back, on a slow loop. */
+.nd-curtain {
+  --notch: 30%;
+  position: absolute; top: 0; left: 50%; width: min(80%, 370px); transform: translateX(-50%);
+  background: #000; color: #fff8e8; border-radius: 0 0 24px 24px; padding: 0 16px 10px;
+  animation: nd-curtain 9s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+.nd-top { height: 26px; display: flex; align-items: center; gap: 8px; font: 600 11px var(--sans); }
+.nd-gap { flex: 0 0 var(--notch); }
+.nd-status { flex: 1; display: flex; align-items: center; gap: 6px; }
+.nd-status i { width: 7px; height: 7px; border-radius: 999px; background: #4ee1d2; }
+.nd-ref { flex: 1; text-align: right; font: 400 10.5px var(--mono); color: #93aaa5; }
+.nd-body { animation: nd-body 9s ease infinite; }
+.nd-surah { margin-top: 8px; display: flex; justify-content: center; align-items: baseline; gap: 8px; color: #93aaa5; font: 400 9.5px var(--mono); letter-spacing: 0.12em; }
+.nd-surah [lang="ar"] { font: 15px/1.5 var(--quran); letter-spacing: 0; }
+.nd-ayah { margin: 2px 0 0; text-align: center; font: 21px/1.95 var(--quran); }
+.nd-ayah .ayah-end { color: #f2bd51; }
+.nd-foot { margin-top: 6px; display: flex; justify-content: space-between; align-items: center; font: 400 10px var(--mono); color: #93aaa5; }
+.nd-foot span:first-child, .nd-foot span:last-child { width: 26px; height: 22px; display: grid; place-items: center; border-radius: 999px; border: 1px solid rgba(255, 248, 232, 0.12); color: #fff8e8; }
+
+@keyframes nd-curtain {
+  0%, 6% { clip-path: inset(0 35% calc(100% - 26px) 35% round 0 0 10px 10px); }
+  14% { clip-path: inset(0 0 calc(100% - 30px) 0 round 0 0 14px 14px); }
+  24%, 78% { clip-path: inset(0 0 0 0 round 0 0 24px 24px); }
+  88% { clip-path: inset(0 0 calc(100% - 28px) 0 round 0 0 12px 12px); }
+  94%, 100% { clip-path: inset(0 35% calc(100% - 26px) 35% round 0 0 10px 10px); }
+}
+.notch-demo .reader-caption { border: 0; padding: 12px 4px 0; }
+@keyframes nd-body { 0%, 16% { opacity: 0; } 26%, 76% { opacity: 1; } 84%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .nd-curtain, .nd-body { animation: none; }
+}

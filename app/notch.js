@@ -1,0 +1,352 @@
+// Notch surface: decides when the curtain comes out of the notch and when it goes
+// back in; the host (QuranNotch.swift on macOS, notch-win.ps1 on Windows) only
+// draws and animates it. Ayat go through text.js like everywhere else.
+//
+//   agent starts working  → curtain drops, ayah fades in
+//   agent needs you       → a strip slides in; Space goes back, curtain folds up
+//   turn finished         → "Saved at …" then folds up, unless you're still
+//                           reading (mouse on the card): then it waits for you
+//   hover the notch       → peek; move away and it folds back
+import { VERSION } from './config.js';
+import { QUICK_STARTS, arabicDigits, resolveQuery } from './quran-core.js';
+import { fillAyah as fillVerified, loadText } from './text.js';
+
+const $ = (id) => document.getElementById(id);
+const meta = window.QuranData;
+const counts = meta.Sura.map((s) => s[1] ?? 0);
+const NAMES = { claude: 'Claude', codex: 'Codex' };
+const params = new URLSearchParams(location.search);
+const BUILD = params.get('build') || '';
+const MAX_HEIGHT = 420;
+
+let quran = null;
+let pos = { surah: 1, ayah: 1 };
+let agent = { status: 'idle' };
+let canSwitch = false;
+let saving = Promise.resolve();
+let pendingSaves = 0;
+
+// Curtain state
+let open = false;
+let openedBy = null; // 'agent' | 'user'
+let hovering = false;
+let lastInteract = 0;
+let closeTimer = null;
+let peekTimer = null;
+let waitForLeave = false; // turn finished while you were reading
+let dismissed = null; // the turn you closed with Esc stays closed
+let lastStatus = null;
+let lastTurnKey = null;
+
+// ── Host bridge ─────────────────────────────────────────────────────────────
+// macOS: WKWebView message handler. Windows: the helper long-polls the server.
+const native = window.webkit?.messageHandlers?.notch;
+function send(msg) {
+  if (native) return native.postMessage(msg);
+  fetch('/api/surface', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(msg) }).catch(() => {});
+}
+
+// chrome: on Windows, the height of the browser's own title strip, which the
+// helper tucks above the top edge of the screen.
+function reportHeight() {
+  const h = Math.min(MAX_HEIGHT, Math.ceil($('card').getBoundingClientRect().height));
+  send({ type: 'height', value: h, chrome: Math.max(0, window.outerHeight - window.innerHeight) });
+}
+
+function setOpen(on, by = 'agent', { focus = false } = {}) {
+  clearTimeout(closeTimer);
+  if (on) {
+    waitForLeave = false;
+    if (!open || focus) send({ type: 'open', focus });
+    if (!open) openedBy = by;
+    open = true;
+    reportHeight();
+  } else if (open) {
+    open = false;
+    openedBy = null;
+    waitForLeave = false;
+    send({ type: 'close' });
+  }
+}
+const closeSoon = (ms) => { clearTimeout(closeTimer); closeTimer = setTimeout(() => setOpen(false), ms); };
+
+// Events from the host: the pointer over the collapsed notch, a click on it.
+window.__notch = (event) => {
+  if (event === 'hover-in') onEnter();
+  else if (event === 'hover-out') onLeave();
+  else if (event === 'click') setOpen(true, 'user', { focus: true });
+};
+document.documentElement.addEventListener('mouseenter', onEnter);
+document.documentElement.addEventListener('mouseleave', onLeave);
+document.addEventListener('pointerdown', () => { lastInteract = Date.now(); });
+
+function onEnter() {
+  hovering = true;
+  clearTimeout(closeTimer);
+  if (!open) {
+    clearTimeout(peekTimer);
+    peekTimer = setTimeout(() => { if (hovering) setOpen(true, 'user'); }, 250);
+  }
+}
+function onLeave() {
+  hovering = false;
+  clearTimeout(peekTimer);
+  const busy = agent.status === 'working' || agent.status === 'needs_you';
+  if (waitForLeave) closeSoon(1000);
+  else if (open && openedBy === 'user' && !busy) closeSoon(600);
+}
+
+// ── Rendering ───────────────────────────────────────────────────────────────
+
+function fail(err) {
+  quran = null;
+  $('ayah-text').replaceChildren();
+  $('ayah-end').textContent = '';
+  $('error').textContent = err.message;
+  $('error').hidden = false;
+  for (const id of ['next', 'prev']) $(id).disabled = true;
+  reportHeight();
+}
+
+function renderAyah(animate = false) {
+  if (!quran) return;
+  const { surah, ayah } = pos;
+  try {
+    fillVerified($('ayah-text'), quran, surah, ayah);
+  } catch (err) {
+    return fail(err);
+  }
+  $('ayah-end').textContent = '۝' + arabicDigits(ayah);
+  $('surah-ar').textContent = meta.Sura[surah][4];
+  $('surah-en').textContent = meta.Sura[surah][5].toUpperCase();
+  $('ref').textContent = `${surah}:${ayah}`;
+  $('stage').scrollTop = 0;
+  const p = document.querySelector('.n-ayah');
+  if (animate) { p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap'); }
+  reportHeight();
+}
+
+function setAlert(kind, title) {
+  const a = $('alert');
+  a.classList.toggle('show', Boolean(kind));
+  if (kind) {
+    a.dataset.kind = kind;
+    $('alert-title').textContent = title;
+  }
+  // Let the strip finish sliding before measuring.
+  setTimeout(reportHeight, 300);
+}
+
+function renderStatus() {
+  const name = NAMES[agent.agent] || 'Agent';
+  const status = agent.status || 'idle';
+  $('card').dataset.status = status;
+  // Beside the notch there's only room for a name; the dot says the rest.
+  $('status-text').textContent = status === 'idle' ? 'Quran Turn' : name;
+  $('status').title = status === 'working' ? `${name} is working` : status === 'needs_you' ? `${name} needs you` : status === 'done' ? 'Turn finished' : '';
+  $('back').textContent = `Back to ${name}`;
+  $('back').hidden = !canSwitch;
+  $('back-key').hidden = !canSwitch;
+  const n = agent.ayat || 0;
+  $('counter').textContent = status === 'working' || status === 'needs_you'
+    ? `${n} ${n === 1 ? 'ayah' : 'ayat'} this turn`
+    : `${pos.surah}:${pos.ayah}`;
+
+  if (status === 'needs_you') setAlert('needs_you', `${name} needs you`);
+  else if (status === 'done' && agent.last_turn) {
+    const t = agent.last_turn;
+    setAlert('done', `Saved at ${t.to} · ${t.ayat} ${t.ayat === 1 ? 'ayah' : 'ayat'}`);
+  } else setAlert(null);
+}
+
+// The curtain follows the turn.
+function followTurn() {
+  const status = agent.status || 'idle';
+  const turn = status === 'done' ? agent.last_turn?.ended_at : agent.turn_started_at;
+  const changed = status !== lastStatus || turn !== lastTurnKey;
+  lastStatus = status;
+  lastTurnKey = turn;
+  if (!changed) return;
+  if ((status === 'working' || status === 'needs_you') && dismissed !== agent.turn_started_at) {
+    setOpen(true, 'agent');
+  } else if (status === 'done') {
+    const reading = hovering || Date.now() - lastInteract < 8000;
+    if (!open) return;
+    if (reading) waitForLeave = true;
+    else closeSoon(1600);
+  }
+}
+
+// ── Position ────────────────────────────────────────────────────────────────
+
+function go(next) {
+  if (!quran) return;
+  pos = { surah: next.surah, ayah: next.ayah };
+  renderAyah(true);
+  renderStatus();
+  pendingSaves++;
+  const body = JSON.stringify(pos);
+  saving = saving
+    .then(() => fetch('/api/position', { method: 'POST', headers: { 'content-type': 'application/json' }, body }))
+    .then((r) => (r.ok ? r.json() : null))
+    .then((snap) => { if (snap) { agent = snap.agent; renderStatus(); } })
+    .catch(() => {})
+    .finally(() => { pendingSaves--; });
+}
+
+function step(delta) {
+  lastInteract = Date.now();
+  hideStart(); // reading on from 1:1 is a choice too
+  let { surah, ayah } = pos;
+  ayah += delta;
+  if (ayah > counts[surah]) { surah = (surah % 114) + 1; ayah = 1; }
+  else if (ayah < 1) { surah = surah === 1 ? 114 : surah - 1; ayah = counts[surah]; }
+  go({ surah, ayah });
+}
+
+const valid = (p) => p && Number.isInteger(p.surah) && p.surah >= 1 && p.surah <= 114 &&
+  Number.isInteger(p.ayah) && p.ayah >= 1 && p.ayah <= counts[p.surah];
+
+// ── First run ───────────────────────────────────────────────────────────────
+// No place saved yet: ask where to start instead of assuming 1:1.
+
+function showStart() {
+  const chips = [];
+  for (const qs of QUICK_STARTS) {
+    const [r] = resolveQuery(qs.query, meta, quran.bySurah);
+    if (r) chips.push([qs.label, () => go({ surah: r.surah, ayah: r.ayah })]);
+  }
+  chips.push(['Search…', () => post('/api/open')]);
+  $('chips').replaceChildren(...chips.map(([label, pick]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'n-chip';
+    b.textContent = label;
+    b.addEventListener('click', () => { lastInteract = Date.now(); hideStart(); pick(); });
+    return b;
+  }));
+  $('start').hidden = false;
+  reportHeight();
+}
+function hideStart() {
+  if ($('start').hidden) return;
+  $('start').hidden = true;
+  reportHeight();
+}
+
+// ── Actions ─────────────────────────────────────────────────────────────────
+
+const post = (path, body = {}) =>
+  fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
+
+function backToAgent() {
+  post('/api/back-to-agent');
+  setOpen(false);
+}
+
+function onKey(e) {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  lastInteract = Date.now();
+  const k = e.key;
+  const alert = $('alert').classList.contains('show');
+  if ((k === ' ' || k === 'Enter') && alert && canSwitch && !e.target.closest?.('button')) {
+    e.preventDefault();
+    return backToAgent();
+  }
+  if (k === 'Escape') {
+    e.preventDefault();
+    if (agent.status === 'working' || agent.status === 'needs_you') dismissed = agent.turn_started_at;
+    return setOpen(false);
+  }
+  // Arabic reads right-to-left, so ← moves forward.
+  if (k === 'ArrowLeft' || k === 'j' || k === ' ') { e.preventDefault(); step(1); }
+  else if (k === 'ArrowRight' || k === 'k') { e.preventDefault(); step(-1); }
+  else if (k === 'g') { e.preventDefault(); post('/api/open'); }
+}
+
+// After a plugin update: new page code, and a new host if its source changed.
+function checkVersion(snap) {
+  if (snap.notchBuild && BUILD && snap.notchBuild !== BUILD) {
+    post('/api/surface/relaunch').then(() => send({ type: 'quit' }));
+    return true;
+  }
+  if (!snap.version || snap.version === VERSION) return false;
+  const key = `quran-turn:reloaded-for:${snap.version}`;
+  try {
+    if (sessionStorage.getItem(key)) return false;
+    sessionStorage.setItem(key, '1');
+  } catch {}
+  location.reload();
+  return true;
+}
+
+function applySnapshot(snap) {
+  if (checkVersion(snap)) return;
+  // Switched to the window reader (`quran-turn surface window`): step aside.
+  if (snap.surface && snap.surface !== 'notch') return send({ type: 'quit' });
+  agent = snap.agent || agent;
+  canSwitch = Boolean(snap.canSwitch);
+  const p = snap.position;
+  if (quran && pendingSaves === 0 && valid(p) && (p.surah !== pos.surah || p.ayah !== pos.ayah)) {
+    pos = { surah: p.surah, ayah: p.ayah };
+    renderAyah();
+  }
+  renderStatus();
+  followTurn();
+}
+
+async function init() {
+  const nw = Number(params.get('nw')) || 0;
+  const nh = Number(params.get('nh')) || 32;
+  document.documentElement.style.setProperty('--nw', `${Math.max(0, Math.min(400, nw))}px`);
+  document.documentElement.style.setProperty('--nh', `${Math.max(24, Math.min(60, nh))}px`);
+  if (params.get('host') === 'win') document.body.classList.add('host-win');
+
+  $('next').addEventListener('click', () => step(1));
+  $('prev').addEventListener('click', () => step(-1));
+  $('full').addEventListener('click', () => post('/api/open'));
+  $('back').addEventListener('click', backToAgent);
+  document.addEventListener('keydown', onKey);
+  new ResizeObserver(reportHeight).observe($('card'));
+
+  try {
+    quran = await loadText();
+  } catch (err) {
+    return fail(err);
+  }
+  try {
+    const snap = await (await fetch('/api/state', { cache: 'no-store' })).json();
+    if (valid(snap.position)) pos = { surah: snap.position.surah, ayah: snap.position.ayah };
+    agent = snap.agent;
+    canSwitch = Boolean(snap.canSwitch);
+    // Whatever is happening when we come up is not a change: don't drop the
+    // curtain for an old finished turn, but do for one in progress.
+    lastStatus = agent.status === 'done' ? 'done' : null;
+    lastTurnKey = agent.status === 'done' ? agent.last_turn?.ended_at : null;
+    if (!snap.position?.updated_at) showStart();
+  } catch {}
+  renderAyah();
+  renderStatus();
+  send({ type: 'ready' });
+
+  const events = new EventSource('/api/events?surface=notch');
+  let lostSince = 0;
+  events.onopen = () => { lostSince = 0; };
+  events.onmessage = (e) => { try { applySnapshot(JSON.parse(e.data)); } catch {} };
+  // The server went away for good (uninstalled, stopped): the host quits too.
+  events.onerror = () => {
+    lostSince ||= Date.now();
+    if (Date.now() - lostSince > 120_000) send({ type: 'quit' });
+  };
+}
+
+// Read by the host when QURAN_NOTCH_DEBUG=1 (see native/QuranNotch.swift).
+window.__notchDebug = () => ({ open, openedBy, hovering, waitForLeave, status: agent.status, lastStatus, closing: closeTimer !== null });
+
+// Exposed for tests: walk ayat through the same verified path.
+window.__quranTurn = {
+  get quran() { return quran; },
+  show(surah, ayah) { pos = { surah, ayah }; renderAyah(); return $('ayah-text').textContent; },
+};
+
+init();

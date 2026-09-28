@@ -42,22 +42,58 @@ export function snapshot() {
 export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = true, onShutdown = () => process.exit(0) } = {}) {
   const meta = loadMeta();
   const counts = meta.Sura.map((s) => s[1] ?? 0);
-  const clients = new Set();
+  // Connected readers (SSE responses) → 'window' | 'notch'
+  const clients = new Map();
   let lastActivity = Date.now();
   let lastOpen = 0;
   const url = `http://127.0.0.1:${port}/`;
 
+  const countOf = (kind) => [...clients.values()].filter((k) => k === kind).length;
+  // Which surface the reader uses: the notch where a host for it exists
+  // (macOS by default, Windows when asked for), the reader window otherwise.
+  const surface = () => {
+    const want = readJson('config.json').surface;
+    if (want === 'window' || typeof win.notchSupported !== 'function') return 'window';
+    return win.notchSupported({ explicit: want === 'notch' }) ? 'notch' : 'window';
+  };
+  const current = () => ({ ...snapshot(), surface: surface(), notchBuild: win.notchBuild?.() || null });
+
   const broadcast = () => {
-    const data = `data: ${JSON.stringify(snapshot())}\n\n`;
-    for (const res of clients) res.write(data);
+    const data = `data: ${JSON.stringify(current())}\n\n`;
+    for (const res of clients.keys()) res.write(data);
   };
 
-  const maybeOpen = (force = false) => {
-    if (clients.size > 0) return false;
+  // Opens the reader for a new turn if none is showing. The notch host takes
+  // a few seconds the very first time (it is compiled on this machine).
+  const maybeOpen = async (force = false) => {
     if (!force && (!readJson('config.json').autoOpen || Date.now() - lastOpen < REOPEN_GUARD_MS)) return false;
+    if (surface() === 'notch') {
+      if (countOf('notch') > 0) return false;
+      lastOpen = Date.now();
+      if (await win.openNotch(url)) return true;
+    }
+    if (clients.size > 0) return false;
     lastOpen = Date.now();
     win.openWindow(url);
     return true;
+  };
+
+  // Windows notch host: it can't receive messages from the page directly, so
+  // the page POSTs them here and the host long-polls for the latest state.
+  let surfaceState = { seq: 0, open: false, height: 0, chrome: 0, focus: false, quit: false };
+  const surfaceWaiters = new Set();
+  const updateSurface = (msg) => {
+    const s = { ...surfaceState, focus: false };
+    if (msg.type === 'open') Object.assign(s, { open: true, focus: Boolean(msg.focus) });
+    else if (msg.type === 'close') s.open = false;
+    else if (msg.type === 'quit') s.quit = true;
+    else if (msg.type === 'height') {
+      s.height = Math.max(0, Math.min(600, Number(msg.value) || 0));
+      s.chrome = Math.max(0, Math.min(120, Number(msg.chrome) || 0));
+    } else return;
+    s.seq = surfaceState.seq + 1;
+    surfaceState = s;
+    for (const w of surfaceWaiters) w();
   };
 
   // "Balancing": while the agent works the reader is full size and in front;
@@ -96,7 +132,8 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
     return win.focusApp(host);
   };
   const autoSwitch = (event) => {
-    if (floating || !readJson('config.json').autoSwitch) return Promise.resolve();
+    // The notch opens and folds on its own (app/notch.js); windows stay put.
+    if (floating || countOf('notch') > 0 || !readJson('config.json').autoSwitch) return Promise.resolve();
     if (event === 'needs-you' || event === 'stop') return backToAgent();
     if (event === 'start' || event === 'resume') return expand();
     return Promise.resolve();
@@ -145,7 +182,7 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
           if (!pos) return json(res, 400, { error: 'invalid position' });
           setPosition(pos, counts);
           broadcast();
-          return json(res, 200, snapshot());
+          return json(res, 200, current());
         }
         if (pathname === '/api/hook') {
           const before = readJson('agent.json').status;
@@ -153,7 +190,7 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
           broadcast();
           // Reply first so the hook returns immediately; windows move afterwards.
           json(res, 200, { ok: true, clients: clients.size });
-          if (body.event === 'start' && maybeOpen()) return;
+          if (body.event === 'start' && (await maybeOpen().catch((e) => (logError(e), false)))) return;
           if (body.event === 'start' || after !== before) await autoSwitch(body.event).catch(logError);
           return;
         }
@@ -169,12 +206,32 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
           await (floating ? collapse() : expand()).catch(logError);
           return;
         }
-        if (pathname === '/api/open') return json(res, 200, { opened: maybeOpen(true), clients: clients.size });
+        // "Open the full reader" (CLI, or ⤢ in the notch): the window, with search and Go to.
+        if (pathname === '/api/open') {
+          const opened = countOf('window') === 0;
+          if (opened) {
+            lastOpen = Date.now();
+            win.openWindow(url);
+          }
+          return json(res, 200, { opened, clients: clients.size });
+        }
+        if (pathname === '/api/surface') {
+          updateSurface(body);
+          return json(res, 200, { seq: surfaceState.seq });
+        }
+        if (pathname === '/api/surface/relaunch') {
+          // An updated notch host: start it once the old one has gone.
+          json(res, 200, { ok: true });
+          setTimeout(() => {
+            if (surface() === 'notch' && countOf('notch') === 0) Promise.resolve(win.openNotch(url)).catch(logError);
+          }, 1500);
+          return;
+        }
         if (pathname === '/api/shutdown') {
           // A hook from a newer plugin version asks this (older) server to step aside.
           json(res, 200, { ok: true, version: VERSION });
           clearInterval(heartbeat);
-          for (const c of clients) c.end();
+          for (const c of clients.keys()) c.end();
           server.close(() => onShutdown());
           return;
         }
@@ -187,16 +244,34 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
 
       if (req.method !== 'GET') return json(res, 405, { error: 'method not allowed' });
       if (pathname === '/api/health') return json(res, 200, { ok: true, app: 'quran-turn', version: VERSION, clients: clients.size });
-      if (pathname === '/api/state') return json(res, 200, snapshot());
+      if (pathname === '/api/state') return json(res, 200, current());
+      if (pathname === '/api/surface') {
+        // Long poll: answer as soon as the state is newer than `since` (or after 25 s).
+        const since = Number(new URL(req.url, url).searchParams.get('since')) || 0;
+        if (surfaceState.seq > since) return json(res, 200, surfaceState);
+        let done = false;
+        const reply = () => {
+          if (done) return;
+          done = true;
+          surfaceWaiters.delete(reply);
+          clearTimeout(timer);
+          json(res, 200, surfaceState);
+        };
+        const timer = setTimeout(reply, 25_000);
+        surfaceWaiters.add(reply);
+        req.on('close', () => { done = true; surfaceWaiters.delete(reply); clearTimeout(timer); });
+        return;
+      }
       if (pathname === '/api/events') {
         res.writeHead(200, {
           'content-type': 'text/event-stream',
           'cache-control': 'no-store',
           connection: 'keep-alive',
         });
-        res.write(`data: ${JSON.stringify(snapshot())}\n\n`);
-        clients.add(res);
-        if (Date.now() - lastOpen < 20_000) setTimeout(() => fitNewWindow().catch(logError), 300);
+        res.write(`data: ${JSON.stringify(current())}\n\n`);
+        const kind = new URL(req.url, url).searchParams.get('surface') === 'notch' ? 'notch' : 'window';
+        clients.set(res, kind);
+        if (kind === 'window' && Date.now() - lastOpen < 20_000) setTimeout(() => fitNewWindow().catch(logError), 300);
         req.on('close', () => {
           clients.delete(res);
           if (clients.size === 0) floating = false; // no reader left, so no card either
@@ -223,13 +298,13 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
 
   // Keep SSE connections alive through proxies/sleep.
   const heartbeat = setInterval(() => {
-    for (const res of clients) res.write(': ping\n\n');
+    for (const res of clients.keys()) res.write(': ping\n\n');
     if (idleExit && clients.size === 0 && Date.now() - lastActivity > IDLE_EXIT_MS) server.close(() => process.exit(0));
   }, 25_000);
   heartbeat.unref();
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);
-    server.listen(port, '127.0.0.1', () => resolve({ server, url, clients, close: () => { clearInterval(heartbeat); for (const c of clients) c.end(); server.close(); } }));
+    server.listen(port, '127.0.0.1', () => resolve({ server, url, clients, close: () => { clearInterval(heartbeat); for (const c of clients.keys()) c.end(); for (const w of surfaceWaiters) w(); server.close(); } }));
   });
 }

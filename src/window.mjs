@@ -4,6 +4,8 @@
 import { execFile, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
+export { notchBuild, notchSupported, openNotch } from './notch.mjs';
+
 const MAC_APPS = ['Google Chrome', 'Brave Browser', 'Microsoft Edge', 'Chromium'];
 const LINUX_BINS = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'brave-browser', 'microsoft-edge'];
 const SIZE = '--window-size=460,740';

@@ -2,6 +2,18 @@
 
 Every release of Quran Turn. The newest is on top. GitHub release notes and the timeline on [quran.allrize.tech](https://quran.allrize.tech/#changelog) are generated from this file.
 
+## [0.7.0] - 2026-09-28
+
+The reader comes out of your Mac's notch.
+
+- **The notch is the new default on macOS, for any agent.** When Claude Code or Codex starts working, a black curtain widens out of the notch and drops into an ayah card. When the turn ends, it shows where your place was saved and folds back in. On a Mac without a notch it comes out of the middle of the menu bar.
+- **Never cut off.** When the agent needs you, a strip slides into the card and **Space** takes you back. After a turn it waits while your mouse is on the card. Hover the notch to peek at your ayah anytime; **Esc** folds it for the turn.
+- **First run asks where to start** right in the notch: Al-Fatihah, Juz 'Amma, Al-Kahf, Yasin, Al-Mulk, or search.
+- **Nothing to install.** The small macOS helper (`native/QuranNotch.swift`) is compiled on your Mac the first time, in a few seconds, with Apple's Command Line Tools. No prebuilt binaries ship, and it needs no permissions. Without the tools, the reader uses its window as before.
+- **Same verified text.** The notch shows the same page as the reader, so every ayah still passes the SHA-256 check and `textContent`-only rendering, now shared in one module.
+- **`quran-turn surface notch | window | auto`** chooses where the reader shows up. The window and Float mode are still there.
+- **Windows (experimental, opt-in):** `quran-turn surface notch` drops the reader from the top of the screen in a frameless Edge window, using only what ships with Windows.
+
 ## [0.6.0] - 2026-09-23
 
 Verified Codex hook setup, with clearer install and update guides.
