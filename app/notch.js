@@ -37,6 +37,7 @@ let waitForLeave = false; // turn finished while you were reading
 let dismissed = null; // the turn you closed with Esc stays closed
 let lastStatus = null;
 let lastTurnKey = null;
+let sentStatus = null;
 
 // ── Host bridge ─────────────────────────────────────────────────────────────
 // macOS: WKWebView message handler. Windows: the helper long-polls the server.
@@ -123,6 +124,7 @@ function renderAyah(animate = false) {
   $('stage').scrollTop = 0;
   const p = document.querySelector('.n-ayah');
   if (animate) { p.classList.remove('swap'); void p.offsetWidth; p.classList.add('swap'); }
+  updateMore();
   reportHeight();
 }
 
@@ -133,13 +135,15 @@ function setAlert(kind, title) {
     a.dataset.kind = kind;
     $('alert-title').textContent = title;
   }
-  // Let the strip finish sliding before measuring.
-  setTimeout(reportHeight, 300);
+  // The card keeps its height; the strip takes room from the ayah, which scrolls.
+  setTimeout(updateMore, 300);
 }
 
 function renderStatus() {
   const name = NAMES[agent.agent] || 'Agent';
   const status = agent.status || 'idle';
+  // The host's tiny pill on the notch breathes while the agent works.
+  if (status !== sentStatus) { sentStatus = status; send({ type: 'status', value: status }); }
   $('card').dataset.status = status;
   // Beside the notch there's only room for a name; the dot says the rest.
   $('status-text').textContent = status === 'idle' ? 'Quran Turn' : name;
@@ -244,6 +248,19 @@ function backToAgent() {
   setOpen(false);
 }
 
+// Hide (or Esc): fold back into the notch. During a turn it stays folded until
+// the next one; hovering the notch still brings it back to peek.
+function hide() {
+  if (agent.status === 'working' || agent.status === 'needs_you') dismissed = agent.turn_started_at;
+  setOpen(false);
+}
+
+// "scroll ↓" and a soft fade while more of the ayah is below.
+function updateMore() {
+  const s = $('stage');
+  $('stage-wrap').classList.toggle('more', s.scrollHeight - s.clientHeight - s.scrollTop > 4);
+}
+
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   lastInteract = Date.now();
@@ -255,8 +272,7 @@ function onKey(e) {
   }
   if (k === 'Escape') {
     e.preventDefault();
-    if (agent.status === 'working' || agent.status === 'needs_you') dismissed = agent.turn_started_at;
-    return setOpen(false);
+    return hide();
   }
   // Arabic reads right-to-left, so ← moves forward.
   if (k === 'ArrowLeft' || k === 'j' || k === ' ') { e.preventDefault(); step(1); }
@@ -301,13 +317,17 @@ async function init() {
   document.documentElement.style.setProperty('--nw', `${Math.max(0, Math.min(400, nw))}px`);
   document.documentElement.style.setProperty('--nh', `${Math.max(24, Math.min(60, nh))}px`);
   if (params.get('host') === 'win') document.body.classList.add('host-win');
+  // A fixed card: a fifth of the screen's height (within sensible limits).
+  const cardH = Math.round(Math.max(190, Math.min(MAX_HEIGHT, (screen.height || 1000) * 0.2)));
+  document.documentElement.style.setProperty('--card-h', `${cardH}px`);
 
   $('next').addEventListener('click', () => step(1));
   $('prev').addEventListener('click', () => step(-1));
-  $('full').addEventListener('click', () => post('/api/open'));
+  $('hide').addEventListener('click', hide);
   $('back').addEventListener('click', backToAgent);
+  $('stage').addEventListener('scroll', updateMore, { passive: true });
   document.addEventListener('keydown', onKey);
-  new ResizeObserver(reportHeight).observe($('card'));
+  new ResizeObserver(() => { updateMore(); reportHeight(); }).observe($('card'));
 
   try {
     quran = await loadText();

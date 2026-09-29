@@ -8,7 +8,7 @@
 :root {
   --ink: #fff8e8; --muted: #93aaa5; --soft: rgba(255, 248, 232, 0.1);
   --teal: #4ee1d2; --brass: #f2bd51; --gold-ink: #3b2204;
-  --nw: 0px; --nh: 32px; --ayah-size: 25px;
+  --nw: 0px; --nh: 32px; --ayah-size: 23px;
   --mono: "DM Mono", ui-monospace, Menlo, monospace;
   --sans: "Manrope", system-ui, -apple-system, sans-serif;
   --quran: "Amiri Quran", serif;
@@ -19,7 +19,9 @@ body.host-win { background: #000; }
 button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 
-.n-card { display: flex; flex-direction: column; padding: 0 18px 12px; user-select: none; -webkit-user-select: none; }
+/* Always the same height (--card-h: a fifth of the screen, set by notch.js),
+   so the curtain never jumps; a long ayah scrolls inside. */
+.n-card { height: var(--card-h, 234px); display: flex; flex-direction: column; padding: 0 18px 10px; user-select: none; -webkit-user-select: none; }
 
 /* The strip level with the notch: status on the left, the notch itself in the
    middle (nothing is drawn under the camera), the reference on the right. */
@@ -45,7 +47,18 @@ button { font: inherit; color: inherit; }
 .n-alert[data-kind="done"] .n-back { background: var(--teal); color: #042a26; }
 .n-key { font-family: var(--mono); font-size: 10px; color: var(--muted); border: 1px solid var(--soft); border-radius: 5px; padding: 1px 5px; }
 
-.n-stage { max-height: 250px; overflow-y: auto; padding: 8px 4px 4px; text-align: center; scrollbar-width: thin; }
+.n-stage-wrap { position: relative; flex: 1; min-height: 0; display: flex; }
+.n-stage { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 10px 4px; text-align: center; outline: none; }
+/* A scrollbar that is always there when there's more to read. */
+.n-stage::-webkit-scrollbar { width: 5px; }
+.n-stage::-webkit-scrollbar-track { background: rgba(255, 248, 232, 0.06); border-radius: 999px; margin: 6px 0; }
+.n-stage::-webkit-scrollbar-thumb { background: rgba(255, 248, 232, 0.38); border-radius: 999px; }
+.n-stage-wrap.more .n-stage { -webkit-mask-image: linear-gradient(#000 calc(100% - 34px), transparent); mask-image: linear-gradient(#000 calc(100% - 34px), transparent); }
+.n-more {
+  position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%); padding: 2px 9px; border-radius: 999px;
+  background: rgba(255, 248, 232, 0.12); font: 400 10px var(--mono); color: var(--ink); opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.n-stage-wrap.more .n-more { opacity: 1; }
 .n-surah { display: flex; align-items: baseline; justify-content: center; gap: 8px; color: var(--muted); }
 .n-surah [lang="ar"] { font-family: var(--quran); font-size: 15px; line-height: 1.6; }
 .n-surah-en { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; }
@@ -65,8 +78,13 @@ button { font: inherit; color: inherit; }
 .n-counter { flex: 1; text-align: center; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
 .n-btn { width: 30px; height: 26px; border: 1px solid var(--soft); border-radius: 999px; background: rgba(255, 248, 232, 0.06); cursor: pointer; font-size: 13px; line-height: 1; }
 .n-btn:hover { background: rgba(255, 248, 232, 0.12); }
-.n-quiet { border-color: transparent; background: transparent; color: var(--muted); }
-.n-btn:focus-visible, .n-back:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.n-hide {
+  height: 26px; padding: 0 11px 0 9px; display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--soft); border-radius: 999px; background: rgba(255, 248, 232, 0.06);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.n-hide:hover { background: rgba(255, 248, 232, 0.14); }
+.n-btn:focus-visible, .n-back:focus-visible, .n-hide:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 
 .n-ayah.swap { animation: swap 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes swap { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }

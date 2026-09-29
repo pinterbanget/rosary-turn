@@ -2,6 +2,14 @@
 
 Every release of Quran Turn. The newest is on top. GitHub release notes and the timeline on [quran.allrize.tech](https://quran.allrize.tech/#changelog) are generated from this file.
 
+## [0.7.1] - 2026-09-29
+
+A calmer notch card.
+
+- **A clear Hide button** replaces the expand icon. It folds the card back into the notch for the rest of the turn (Esc does the same); hover the notch to peek again. **G** still opens the full reader.
+- **A fixed size:** the card is always a fifth of your screen's height, so it never grows or jumps between ayat. A long ayah scrolls inside it, with a visible scrollbar, a soft fade and a *scroll ↓* hint while there's more to read.
+- **A tiny pill on the notch** says Quran Turn is there: British racing green on black, barely visible at rest. It breathes while your agent works and turns teal when your pointer reaches the notch, just before the card peeks out.
+
 ## [0.7.0] - 2026-09-28
 
 The reader comes out of your Mac's notch.

@@ -102,13 +102,14 @@ With the reader window instead of the notch (`quran-turn surface window`, and on
 
 ## The notch (default on macOS)
 
-The reader lives in your MacBook's notch. It is black like the notch itself, so while nothing is happening you don't see it at all.
+The reader lives in your MacBook's notch. It is black like the notch itself, so while nothing is happening you only see a tiny dark-green pill on the notch's bottom edge. The pill breathes while your agent works and turns teal when your pointer comes near, just before the card peeks out.
 
 - **You send a prompt** (from any agent): the curtain widens just past the notch and drops into an ayah card, with a soft spring at the end. Beside the notch you see who is working (**● Claude** or **● Codex**) and where you are (`2:155`).
 - **Read:** click the card, then use ← / →, or the arrows on the card. Until you click it, your typing stays with your agent.
 - **The agent needs you:** *Claude needs you · Back to Claude* slides into the card without cutting off your ayah. Press **Space** when you're ready: your agent comes to the front and the curtain folds up. It comes back down when the agent resumes.
 - **The turn ends:** *Saved at 2:157 · 4 ayat* shows for a moment, then the curtain folds back into the notch. If your mouse is still on the card, it waits until you move away, so you're never cut off mid-ayah.
-- **Anytime:** hover over the notch to peek at your ayah, and move away to fold it again. **Esc** folds it for the rest of the turn. **⤢** (or **G**) opens the full reader, with search, the surah list and Go to.
+- **Always the same size:** the card is a fifth of your screen's height and never jumps around. A long ayah scrolls inside it, with a scrollbar and a *scroll ↓* hint while there's more.
+- **Anytime:** hover over the notch to peek at your ayah, and move away to fold it again. **Hide** (or **Esc**) folds it back into the notch for the rest of the turn. **G** opens the full reader, with search, the surah list and Go to.
 - **First time:** the notch asks *where would you like to start?* with one-tap starts (Al-Fatihah, Juz 'Amma, Al-Kahf, Yasin, Al-Mulk) and **Search…** for anything else.
 
 **Setup:** nothing. The first time the notch opens, Quran Turn compiles its small macOS helper ([`native/QuranNotch.swift`](native/QuranNotch.swift), about 400 lines you can read) on your Mac with the Swift compiler from Apple's Command Line Tools. That takes a few seconds, once. No prebuilt binary ships with the plugin, and the helper needs no permissions. If the Command Line Tools are missing (`xcode-select --install` adds them), or you're on macOS 11 or older, the reader opens in its window instead.
@@ -192,7 +193,7 @@ Once the updated plugin is loaded and its hooks are trusted, the next prompt swa
 
 > Coming from **v0.4.0 or earlier**? Refresh or close the reader window once after updating, because the self-reload arrived in v0.4.1. From then on it's automatic.
 
-**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.7.0"). Click it and the site tells you whether a newer version exists.
+**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.7.1"). Click it and the site tells you whether a newer version exists.
 
 ## Using the reader
 

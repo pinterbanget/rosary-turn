@@ -87,6 +87,11 @@ final class ShapeView: NSView {
   let fill = CAShapeLayer()
   let mask = CAShapeLayer()
   let content = NSView()
+  // A tiny pill on the notch's bottom edge: Quran Turn is here. Barely there
+  // at rest, breathing while your agent works, brighter under the pointer.
+  let indicator = CALayer()
+  var agentWorking = false { didSet { updateIndicator() } }
+  var hovering = false { didSet { updateIndicator() } }
   var onHover: ((Bool) -> Void)?
   var onClick: (() -> Void)?
 
@@ -97,9 +102,40 @@ final class ShapeView: NSView {
     fill.fillColor = NSColor.black.cgColor
     content.wantsLayer = true
     addSubview(content)
+    indicator.cornerRadius = 1.5
+    layer?.addSublayer(indicator)
+    updateIndicator()
     addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
   }
   required init?(coder: NSCoder) { fatalError() }
+
+  static let racingGreen = NSColor(srgbRed: 0.0, green: 0.26, blue: 0.15, alpha: 1)   // #004226
+  static let restGreen = NSColor(srgbRed: 0.06, green: 0.36, blue: 0.24, alpha: 1)    // a touch brighter
+  static let hoverTeal = NSColor(srgbRed: 0.14, green: 0.61, blue: 0.52, alpha: 1)    // #239c84, the reader's teal
+
+  func updateIndicator() {
+    indicator.removeAnimation(forKey: "breathe")
+    CATransaction.begin()
+    CATransaction.setAnimationDuration(0.25)
+    if hovering {
+      indicator.backgroundColor = ShapeView.hoverTeal.cgColor
+    } else if agentWorking {
+      indicator.backgroundColor = ShapeView.restGreen.cgColor
+      if !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+        let a = CABasicAnimation(keyPath: "backgroundColor")
+        a.fromValue = ShapeView.racingGreen.cgColor
+        a.toValue = ShapeView.restGreen.cgColor
+        a.duration = 1.6
+        a.autoreverses = true
+        a.repeatCount = .infinity
+        a.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        indicator.add(a, forKey: "breathe")
+      }
+    } else {
+      indicator.backgroundColor = ShapeView.racingGreen.cgColor
+    }
+    CATransaction.commit()
+  }
 
   // 0 at the notch, 1 once the card is a little way down.
   var progress: CGFloat { max(0, min(1, (bounds.height - collapsed.height) / 40)) }
@@ -134,6 +170,10 @@ final class ShapeView: NSView {
     if content.layer?.mask == nil { content.layer?.mask = mask }
     mask.frame = bounds
     mask.path = shape
+    // 22×3, centred 5 px above the bottom edge; gone as soon as the card opens.
+    indicator.frame = CGRect(x: (bounds.width - 22) / 2, y: 5, width: 22, height: 3)
+    indicator.opacity = Float(max(0, 1 - progress * 3))
+    indicator.zPosition = 1
     // The page keeps its full size and is revealed by the shape (the curtain),
     // anchored at the top, inside the flares.
     if let web = content.subviews.first {
@@ -143,8 +183,8 @@ final class ShapeView: NSView {
   }
 
   override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-  override func mouseEntered(with event: NSEvent) { onHover?(true) }
-  override func mouseExited(with event: NSEvent) { onHover?(false) }
+  override func mouseEntered(with event: NSEvent) { hovering = true; onHover?(true) }
+  override func mouseExited(with event: NSEvent) { hovering = false; onHover?(false) }
   override func mouseDown(with event: NSEvent) { onClick?() }
 }
 
@@ -207,6 +247,11 @@ final class NotchHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     place(size)
     if geo.hasNotch { panel.orderFrontRegardless() } // sits on the notch, invisible
     load()
+
+    // With QURAN_NOTCH_SNAPSHOT, also capture the folded notch and its pill.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+      if self?.isOpen == false { self?.writeSnapshot(suffix: "-idle") }
+    }
 
     // QURAN_NOTCH_DEBUG=1: print the page's curtain state twice a second.
     if ProcessInfo.processInfo.environment["QURAN_NOTCH_DEBUG"] == "1" {
@@ -348,13 +393,15 @@ final class NotchHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
 
   // QURAN_NOTCH_SNAPSHOT=/path.png: after each opening, draw the card (shape +
   // page) into a PNG. For checking the design without screen recording rights.
-  func writeSnapshot() {
-    guard let path = ProcessInfo.processInfo.environment["QURAN_NOTCH_SNAPSHOT"] else { return }
+  func writeSnapshot(suffix: String = "") {
+    guard var path = ProcessInfo.processInfo.environment["QURAN_NOTCH_SNAPSHOT"] else { return }
+    if !suffix.isEmpty { path = path.replacingOccurrences(of: ".png", with: "\(suffix).png") }
     let bounds = shape.bounds
     let webFrame = web.frame
+    let pill = (frame: shape.indicator.frame, color: shape.indicator.backgroundColor, alpha: CGFloat(shape.indicator.opacity))
     web.takeSnapshot(with: nil) { [weak self] image, _ in
-      guard let self, let image else { return }
-      let scale: CGFloat = 2
+      guard let self else { return }
+      let scale: CGFloat = 4
       let w = Int(bounds.width * scale), h = Int(bounds.height * scale)
       guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
                                 space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
@@ -368,8 +415,14 @@ final class NotchHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
       ctx.fillPath()
       ctx.addPath(shapePath)
       ctx.clip()
-      if let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+      if !self.web.isHidden, let cg = image?.cgImage(forProposedRect: nil, context: nil, hints: nil) {
         ctx.draw(cg, in: webFrame)
+      }
+      if pill.alpha > 0, let color = pill.color {
+        ctx.setAlpha(pill.alpha)
+        ctx.addPath(CGPath(roundedRect: pill.frame, cornerWidth: 1.5, cornerHeight: 1.5, transform: nil))
+        ctx.setFillColor(color)
+        ctx.fillPath()
       }
       guard let out = ctx.makeImage() else { return }
       let rep = NSBitmapImageRep(cgImage: out)
@@ -391,6 +444,8 @@ final class NotchHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     case "close": close()
     case "height":
       if let v = body["value"] as? Double { setHeight(CGFloat(v)) }
+    case "status":
+      shape.agentWorking = (body["value"] as? String) == "working"
     case "quit": NSApp.terminate(nil)
     default: break
     }
