@@ -489,6 +489,15 @@ describe('server', () => {
     execFileSync('xcrun', ['swiftc', '-typecheck', join(ROOT, 'native/QuranNotch.swift')], { stdio: 'pipe', timeout: 120_000 });
   });
 
+  test('versions compare numerically, so an older plugin never replaces a newer server', async () => {
+    const { compareVersions } = await import('../src/quran.mjs');
+    assert.ok(compareVersions('0.7.5', '0.7.1') > 0);
+    assert.ok(compareVersions('0.10.0', '0.9.9') > 0, 'numeric, not string order');
+    assert.equal(compareVersions('0.7.5', '0.7.5'), 0);
+    assert.ok(compareVersions('0.7.1', '0.7.5') < 0);
+    assert.ok(compareVersions(undefined, '0.1.0') < 0, 'an old server without a version is older');
+  });
+
   test('only real bundle ids are ever passed to `open -b`', async () => {
     const { validBundleId } = await import('../src/window.mjs');
     assert.ok(validBundleId('com.anthropic.claudefordesktop'));

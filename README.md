@@ -7,10 +7,13 @@ Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your age
 **The notch is the default on macOS, whichever agent you use.** It works the same for Claude Code (terminal or desktop app) and Codex (CLI or app), because it follows the agent's hooks rather than a particular app. On a Mac without a notch it comes out of the middle of the menu bar. On Windows and Linux the reader opens in its own window. A frameless Windows version that drops from the top of the screen is available to try (see [The notch](#the-notch-default-on-macos)).
 
 <p align="center">
-  <img src="docs/reader-working.png" width="260" alt="Reader while Claude is working, showing Al-Baqara 2:155">
-  <img src="docs/reader-needs-you.png" width="260" alt="Claude needs you: a Back to Claude button, or press Space">
-  <img src="docs/reader-done-dark.png" width="260" alt="Dark mode after the turn finished: saved at 2:157 automatically">
+  <img src="docs/notch-working.png" width="480" alt="The notch card while Claude works, 4 minutes in: Al-Baqara 2:155, with Next, Previous and Hide">
 </p>
+<p align="center">
+  <img src="docs/notch-needs-you.png" width="360" alt="Claude needs you: a strip slides in with Back to Claude, or press Space">
+  <img src="docs/notch-done.png" width="360" alt="The turn finished, in green: Claude worked 4 min, saved at 2:155, before the card folds back into the notch">
+</p>
+<p align="center"><sub>Teal while Claude works (4 minutes in) · yellow when it needs you · green when it's done. At rest there's only a tiny dark-green line on the notch.</sub></p>
 
 - **Exact Qur'an text.** It ships Tanzil's verified Uthmani text byte-for-byte and checks it by SHA-256 before a single letter renders. No code path, and no LLM, ever edits it.
 - **Fully offline.** The text, fonts and reader all live on your machine. No account, sync, analytics or telemetry.
@@ -82,13 +85,13 @@ Then send any prompt. On macOS the reader comes out of the notch. Elsewhere it o
 ## How it works
 
 ```
- you send a prompt ─▶ UserPromptSubmit ─▶ the curtain comes out of the notch · "● Claude" or "● Codex" · counts ayat
+ you send a prompt ─▶ UserPromptSubmit ─▶ the curtain comes out of the notch · "● Claude · 4m" (teal) · counts ayat
                                             │
-   agent asks approval ─▶ PermissionRequest ─▶ "Claude needs you" slides in · Space takes you back, the curtain folds up
+   agent asks approval ─▶ PermissionRequest ─▶ "Claude needs you" slides in (yellow) · Space takes you back, it folds up
                                             │
      you approve, tool runs ─▶ PostToolUse ─▶ the curtain comes back down where you were reading
                                             │
-             turn ends ─▶ Stop ─▶ place saved automatically · "Saved at 2:157" · the curtain folds into the notch
+             turn ends ─▶ Stop ─▶ place saved · "Claude worked 4 min · saved at 2:157" (green) · folds into the notch
 ```
 
 With the reader window instead of the notch (`quran-turn surface window`, and on Windows or Linux), the window shrinks to a small strip and your agent comes to the front at the same moments.
@@ -102,33 +105,43 @@ With the reader window instead of the notch (`quran-turn surface window`, and on
 
 ## The notch (default on macOS)
 
-The reader lives in your MacBook's notch. It is black like the notch itself, so while nothing is happening you only see a tiny dark-green pill on the notch's bottom edge. The pill breathes while your agent works and turns teal when your pointer comes near, just before the card peeks out.
+The reader lives in your MacBook's notch. It is black like the notch itself, so while nothing is happening you only see a tiny dark-green pill on the notch's bottom edge. The pill breathes while your agent works, turns **yellow** when the agent needs you and **green** when the turn is done, and turns teal when your pointer comes near, just before the card peeks out.
 
-- **You send a prompt** (from any agent): the curtain widens just past the notch and drops into an ayah card, with a soft spring at the end. Beside the notch you see who is working (**● Claude** or **● Codex**) and where you are (`2:155`).
+- **You send a prompt** (from any agent): the curtain widens just past the notch and drops into an ayah card, with a soft spring at the end. Beside the notch you see who is working and for how long (**● Claude · 4m**, **● Codex · 12m**) and where you are (`2:155`).
+- **The colours say what's happening:** teal while your agent works, **yellow** when it needs your confirmation, **green** when it's done.
 - **Read:** click the card, then use ← / →, or the arrows on the card. Until you click it, your typing stays with your agent.
 - **The agent needs you:** *Claude needs you · Back to Claude* slides into the card without cutting off your ayah. Press **Space** when you're ready: your agent comes to the front and the curtain folds up. It comes back down when the agent resumes.
-- **The turn ends:** *Saved at 2:157 · 4 ayat* shows for a moment, then the curtain folds back into the notch. If your mouse is still on the card, it waits until you move away, so you're never cut off mid-ayah.
+- **The turn ends:** *Claude worked 4 min · saved at 2:157* shows in green for a moment, then the curtain folds back into the notch. If your mouse is still on the card, it waits until you move away, so you're never cut off mid-ayah.
 - **Always the same size:** the card is a fifth of your screen's height and never jumps around. A long ayah scrolls inside it, with a scrollbar and a *scroll ↓* hint while there's more.
-- **Anytime:** hover over the notch to peek at your ayah, and move away to fold it again. **Hide** (or **Esc**) folds it back into the notch for the rest of the turn. **G** opens the full reader, with search, the surah list and Go to.
+- **Search and jump, in the notch:** press **Search** (or **G** / **/**) and type `kahfi`, `the cave`, `juz 30`, `2:255`, `hal 50` or Arabic words; **Enter** jumps there. The search is offline and matches names, numbers and the Arabic text; it doesn't search by topic. *Browse all 114 surahs* opens the full reader.
+- **Anytime:** hover over the notch to peek at your ayah, and move away to fold it again. **Hide** (or **Esc**) folds it back into the notch for the rest of the turn.
 - **First time:** the notch asks *where would you like to start?* with one-tap starts (Al-Fatihah, Juz 'Amma, Al-Kahf, Yasin, Al-Mulk) and **Search…** for anything else.
 
-**Setup:** nothing. The first time the notch opens, Quran Turn compiles its small macOS helper ([`native/QuranNotch.swift`](native/QuranNotch.swift), about 400 lines you can read) on your Mac with the Swift compiler from Apple's Command Line Tools. That takes a few seconds, once. No prebuilt binary ships with the plugin, and the helper needs no permissions. If the Command Line Tools are missing (`xcode-select --install` adds them), or you're on macOS 11 or older, the reader opens in its window instead.
+**Setup:** nothing. The first time the notch opens, Quran Turn compiles its small macOS helper ([`native/QuranNotch.swift`](native/QuranNotch.swift), about 500 lines you can read) on your Mac with the Swift compiler from Apple's Command Line Tools. That takes a few seconds, once. No prebuilt binary ships with the plugin, and the helper needs no permissions. If the Command Line Tools are missing (`xcode-select --install` adds them), or you're on macOS 11 or older, the reader opens in its window instead.
 
 The helper only draws and animates the black shape. The reading itself is the same page as everywhere else, so the Qur'an text still goes through the SHA-256 check and `textContent`-only rendering.
 
 **Choose where the reader shows up:**
 
 ```bash
-quran-turn surface notch     # the default on macOS
+quran-turn surface notch     # the default on macOS; also brings the notch up right now
 quran-turn surface window    # the reader window (with Float mode)
 quran-turn surface auto      # notch on macOS, window elsewhere
 ```
+
+**Nothing in the notch?** Run `quran-turn surface notch`: it prepares the helper (compiling it the first time) and brings the notch up, or says what's missing. Check `xcode-select -p` prints a path; if not, `xcode-select --install`. Anything that went wrong is logged in `~/.quran-turn/error.log`.
 
 **Windows (experimental).** Windows has no notch, so `quran-turn surface notch` makes the reader drop from the top-centre of the screen instead. It runs in a Microsoft Edge app window with its title bar and frame removed, always on top, and uses nothing beyond what ships with Windows 10/11 ([`native/notch-win.ps1`](native/notch-win.ps1)). It is opt-in while it gets tested on real machines, so please [open an issue](https://github.com/rzrizaldy/quran-turn/issues) with what you see.
 
 ## Float mode
 
-Float belongs to the window surface (`quran-turn surface window`). Press **Float** in the reader (or the **F** key) and the reader becomes a small ayah card that stays **on top of every app**, including the Claude desktop app, Codex, Terminal and your editor. Drag it wherever you like, and it stays there.
+<p align="center">
+  <img src="docs/reader-working.png" width="220" alt="The reader window while Claude is working, showing Al-Baqara 2:155">
+  <img src="docs/reader-needs-you.png" width="220" alt="The reader window when Claude needs you: a Back to Claude button, or press Space">
+  <img src="docs/reader-done-dark.png" width="220" alt="The reader window in dark mode after the turn finished">
+</p>
+
+Float belongs to the window surface (`quran-turn surface window`, and the default on Windows and Linux). Press **Float** in the reader (or the **F** key) and the reader becomes a small ayah card that stays **on top of every app**, including the Claude desktop app, Codex, Terminal and your editor. Drag it wherever you like, and it stays there.
 
 - **While the agent works:** read with ← / →. The card never moves on its own and never steals focus.
 - **When the agent needs you:** a strip slides into the card: *Claude needs you · Back to Claude*. Nothing jumps and your reading isn't cut off. Press **Space** (or Enter) when you're ready, and your agent comes to the front.
@@ -189,11 +202,13 @@ codex plugin list
 
 Confirm the latest version is enabled. Restart the Codex app if you use it. In an interactive Codex CLI session, run `/hooks` and review any Quran Turn hooks marked as new or changed; hook trust is tied to the current definition. Codex updates are a manual step here. Claude Code's marketplace has the auto-update switch described above.
 
-Once the updated plugin is loaded and its hooks are trusted, the next prompt swaps the reader server to the new version and an open reader window reloads on its own. Your place and reading log in `~/.quran-turn` are never touched by an update.
+Once the updated plugin is loaded and its hooks are trusted, the next prompt swaps the reader server to the new version and an open reader window reloads on its own. When an update changes the notch helper, it is recompiled once, in a few seconds, and comes back by itself. Your place and reading log in `~/.quran-turn` are never touched by an update.
+
+Running Claude Code and Codex side by side, or several sessions? The newest installed version always wins: a session that hasn't reloaded its plugins yet leaves a newer reader alone instead of swapping it back.
 
 > Coming from **v0.4.0 or earlier**? Refresh or close the reader window once after updating, because the self-reload arrived in v0.4.1. From then on it's automatic.
 
-**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.7.1"). Click it and the site tells you whether a newer version exists.
+**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.7.5"). Click it and the site tells you whether a newer version exists.
 
 ## Using the reader
 
@@ -208,7 +223,7 @@ Once the updated plugin is loaded and its hooks are trusted, the next prompt swa
 | `f` | **Float**: the always-on-top ayah card |
 | `esc` | Close the float card, or fold the notch for this turn |
 
-In the notch, `←` / `→`, `space`, `g` and `esc` work the same once you've clicked the card.
+In the notch, `←` / `→`, `space` and `esc` work the same once you've clicked the card, and `g` or `/` opens Search right in the card.
 
 ```
 quran-turn surface <s> notch · window · auto          → where the reader shows up
@@ -242,7 +257,8 @@ Everything is plain JSON in `~/.quran-turn/` (override with `QURAN_TURN_HOME`):
 | `state.json` | where you are: `{"surah": 2, "ayah": 157}` |
 | `agent.json` | whether the agent is working, waiting on you, or done |
 | `sessions.jsonl` | one line per turn: `{"from":"2:153","to":"2:157","ayat":4,"agent":"claude", …}` |
-| `config.json` | `{"enabled": true, "autoOpen": true, "autoSwitch": true}` |
+| `config.json` | `{"enabled": true, "autoOpen": true, "autoSwitch": true, "surface": "auto"}` |
+| `notch/` | the compiled notch helper (macOS); delete it any time and it's rebuilt |
 
 Your prompts, code and anything else from your agent session are **never** stored. Delete these files whenever you like.
 
@@ -315,8 +331,9 @@ npm start         # reader at http://127.0.0.1:47114
 
 ```
 bin/quran-turn          CLI and hook entry point
-src/                    state machine, local server, window opener
-app/                    the reader (HTML/CSS/JS, bundled fonts)
+src/                    state machine, local server, window opener, notch launcher
+app/                    the reader and the notch page (HTML/CSS/JS, bundled fonts)
+native/                 the notch hosts: QuranNotch.swift (macOS), notch-win.ps1 (Windows)
 data/                   Tanzil text + metadata (verbatim) and checksums
 hooks/hooks.json        hook wiring for Claude Code and Codex
 .claude-plugin/         Claude Code plugin + marketplace manifests
@@ -325,6 +342,8 @@ site/                   quran.allrize.tech (Cloudflare Pages: public/ + function
 scripts/                fetch + verify the Qur'an data
 test/                   node:test suites
 ```
+
+Working on the notch: `QURAN_NOTCH_DEBUG=1` makes the helper print the page's curtain state, and `QURAN_NOTCH_SNAPSHOT=/tmp/card.png` renders the card to PNG after it opens (and again on `kill -USR1 <pid>`), which is how the images above were made.
 
 Contributions are welcome. The one rule: **never modify anything in `data/`**. Tanzil's license forbids changing the text, and `npm run verify` will catch it.
 

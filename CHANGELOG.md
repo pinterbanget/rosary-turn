@@ -2,6 +2,17 @@
 
 Every release of Quran Turn. The newest is on top. GitHub release notes and the timeline on [quran.allrize.tech](https://quran.allrize.tech/#changelog) are generated from this file.
 
+## [0.7.5] - 2026-09-29
+
+How long your agent worked, in colour, and a steadier update path.
+
+- **How long it's been working:** beside the notch you see **● Claude · 4m** (or Codex, or whichever agent), and when the turn ends: *Claude worked 4 min · saved at 2:157*.
+- **Search and jump from the notch:** a **Search** button beside Hide (or **G** / **/**). Type a surah name or meaning, `juz 30`, `2:255`, `hal 50` or Arabic words and press Enter to jump there. Every ayah in the results is the verified text.
+- **Colours with a meaning:** teal while the agent works, **yellow** when it needs your confirmation, **green** when it's done. The tiny pill on the notch follows the same colours.
+- **Newest version wins.** A session that hasn't reloaded its plugins yet no longer swaps a newer reader back to its older one, so Claude Code and Codex (or several sessions) can run side by side after an update.
+- **`quran-turn surface notch` brings the notch up right away**, and says what's missing if it can't.
+- **Documentation:** new notch images in the README, a troubleshooting note, the `notch/` folder in your data, and debug switches for working on the notch helper. The landing page shows the timer, the Hide button and the pill.
+
 ## [0.7.1] - 2026-09-29
 
 A calmer notch card.

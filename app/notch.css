@@ -7,7 +7,7 @@
 
 :root {
   --ink: #fff8e8; --muted: #93aaa5; --soft: rgba(255, 248, 232, 0.1);
-  --teal: #4ee1d2; --brass: #f2bd51; --gold-ink: #3b2204;
+  --teal: #4ee1d2; --brass: #f2bd51; --gold-ink: #3b2204; --green: #5ad19a;
   --nw: 0px; --nh: 32px; --ayah-size: 23px;
   --mono: "DM Mono", ui-monospace, Menlo, monospace;
   --sans: "Manrope", system-ui, -apple-system, sans-serif;
@@ -30,21 +30,27 @@ button { font: inherit; color: inherit; }
 .n-status { flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
 .n-ref { flex: 1; min-width: 0; text-align: right; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .n-dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 999px; border: 1.5px solid var(--muted); }
+.n-time { font-family: var(--mono); font-size: 10.5px; font-weight: 400; color: var(--muted); }
+.n-time:not(:empty)::before { content: "· "; }
+/* Working: teal, pulsing. Needs you: yellow. Done: green. */
 [data-status="working"] .n-status { color: var(--ink); }
 [data-status="working"] .n-dot { border: none; background: var(--teal); animation: pulse 1.8s ease-out infinite; }
+[data-status="needs_you"] .n-status, [data-status="needs_you"] .n-time { color: var(--brass); }
 [data-status="needs_you"] .n-dot { border: none; background: var(--brass); }
+[data-status="done"] .n-status, [data-status="done"] .n-time { color: var(--green); }
+[data-status="done"] .n-dot { border: none; background: var(--green); }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(78, 225, 210, 0.5); } 70%, 100% { box-shadow: 0 0 0 6px rgba(78, 225, 210, 0); } }
 
 /* The alert strip slides in inside the card; reading is never cut off. */
 .n-alert { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), margin 0.28s; }
 .n-alert.show { grid-template-rows: 1fr; margin-top: 6px; }
-.n-alert-inner { overflow: hidden; min-height: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 12px; padding: 0 10px; background: rgba(78, 225, 210, 0.12); }
+.n-alert-inner { overflow: hidden; min-height: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 12px; padding: 0 10px; background: rgba(90, 209, 154, 0.14); }
 .n-alert.show .n-alert-inner { padding: 7px 8px 7px 12px; }
 .n-alert[data-kind="needs_you"] .n-alert-inner { background: rgba(242, 189, 81, 0.16); }
 .n-alert-title { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .n-alert-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .n-back { height: 26px; padding: 0 11px; border: none; border-radius: 999px; background: var(--brass); color: var(--gold-ink); font-size: 12px; font-weight: 700; cursor: pointer; }
-.n-alert[data-kind="done"] .n-back { background: var(--teal); color: #042a26; }
+.n-alert[data-kind="done"] .n-back { background: var(--green); color: #06291a; }
 .n-key { font-family: var(--mono); font-size: 10px; color: var(--muted); border: 1px solid var(--soft); border-radius: 5px; padding: 1px 5px; }
 
 .n-stage-wrap { position: relative; flex: 1; min-height: 0; display: flex; }
@@ -85,6 +91,31 @@ button { font: inherit; color: inherit; }
 }
 .n-hide:hover { background: rgba(255, 248, 232, 0.14); }
 .n-btn:focus-visible, .n-back:focus-visible, .n-hide:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* Search inside the card: takes the ayah's place, results scroll. */
+.n-search { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 6px; }
+.n-search-bar { display: flex; gap: 6px; }
+.n-search-bar input {
+  flex: 1; min-width: 0; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255, 248, 232, 0.2);
+  background: rgba(255, 248, 232, 0.06); color: var(--ink); font: 500 13px var(--sans); outline: none;
+}
+.n-search-bar input:focus { border-color: var(--teal); }
+.n-search-bar input::placeholder { color: var(--muted); }
+.n-x { width: 30px; height: 30px; border: 1px solid var(--soft); border-radius: 999px; background: transparent; font-size: 16px; line-height: 1; cursor: pointer; color: var(--muted); }
+.n-results { flex: 1; min-height: 0; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.n-results::-webkit-scrollbar { width: 5px; }
+.n-results::-webkit-scrollbar-thumb { background: rgba(255, 248, 232, 0.38); border-radius: 999px; }
+.n-result {
+  width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  padding: 5px 8px; border: 0; border-radius: 10px; background: transparent; text-align: left; cursor: pointer;
+}
+.n-result:hover, .n-result:focus-visible { background: rgba(255, 248, 232, 0.08); outline: none; }
+.n-rnum { font: 400 10.5px var(--mono); color: var(--muted); }
+.n-rname { min-width: 0; display: flex; flex-direction: column; font-size: 12.5px; font-weight: 700; }
+.n-rsub { font-size: 11px; font-weight: 500; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n-rayah { font: 15px/1.7 var(--quran); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: right; }
+.n-rar { font: 14px var(--quran); color: var(--muted); }
+.n-none { padding: 10px 8px; font-size: 12px; color: var(--muted); }
 
 .n-ayah.swap { animation: swap 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
 @keyframes swap { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }

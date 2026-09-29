@@ -356,13 +356,19 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
 .nd-gap { flex: 0 0 var(--notch); }
 .nd-status { flex: 1; display: flex; align-items: center; gap: 6px; }
 .nd-status i { width: 7px; height: 7px; border-radius: 999px; background: #4ee1d2; }
+.nd-status em { font: 400 10px var(--mono); font-style: normal; color: #93aaa5; }
+.nd-foot b { margin-right: 0; height: 22px; padding: 0 9px; display: grid; place-items: center; border-radius: 999px; border: 1px solid rgba(255, 248, 232, 0.12); font: 700 10.5px var(--sans); color: #fff8e8; }
+/* The tiny pill on the folded notch: racing green, gone once the card opens. */
+.nd-pill { position: absolute; top: 19px; left: 50%; width: 22px; height: 3px; margin-left: -11px; border-radius: 2px; background: #0f5c3d; animation: nd-pill 9s ease infinite; }
+@keyframes nd-pill { 0%, 6% { opacity: 1; } 12%, 90% { opacity: 0; } 96%, 100% { opacity: 1; } }
 .nd-ref { flex: 1; text-align: right; font: 400 10.5px var(--mono); color: #93aaa5; }
 .nd-body { animation: nd-body 9s ease infinite; }
 .nd-surah { margin-top: 8px; display: flex; justify-content: center; align-items: baseline; gap: 8px; color: #93aaa5; font: 400 9.5px var(--mono); letter-spacing: 0.12em; }
 .nd-surah [lang="ar"] { font: 15px/1.5 var(--quran); letter-spacing: 0; }
 .nd-ayah { margin: 2px 0 0; text-align: center; font: 21px/1.95 var(--quran); }
 .nd-ayah .ayah-end { color: #f2bd51; }
-.nd-foot { margin-top: 6px; display: flex; justify-content: space-between; align-items: center; font: 400 10px var(--mono); color: #93aaa5; }
+.nd-foot { margin-top: 6px; display: flex; justify-content: flex-end; gap: 6px; align-items: center; font: 400 10px var(--mono); color: #93aaa5; }
+.nd-foot > span:nth-child(2) { margin-right: auto; margin-left: 8px; }
 .nd-foot span:first-child, .nd-foot span:last-child { width: 26px; height: 22px; display: grid; place-items: center; border-radius: 999px; border: 1px solid rgba(255, 248, 232, 0.12); color: #fff8e8; }
 
 @keyframes nd-curtain {
@@ -375,5 +381,6 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
 .notch-demo .reader-caption { border: 0; padding: 12px 4px 0; }
 @keyframes nd-body { 0%, 16% { opacity: 0; } 26%, 76% { opacity: 1; } 84%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .nd-curtain, .nd-body { animation: none; }
+  .nd-curtain, .nd-body, .nd-pill { animation: none; }
+  .nd-pill { opacity: 0; }
 }

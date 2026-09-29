@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Quran Turn · Read Qur'an while your agent thinks</title>
 <meta name="description" content="A quiet, offline Qur'an reader that opens while Claude Code or Codex works on your prompt. Exact Tanzil text, no account, no tracking.">
-<link rel="stylesheet" href="site.css?v=0.7.0">
+<link rel="stylesheet" href="site.css?v=0.7.5">
 </head>
 <body>
 <header class="top">
@@ -45,15 +45,16 @@
         <div class="nd-screen">
           <div class="nd-menubar" aria-hidden="true"><span class="nd-apple"></span><span class="nd-menu"></span><span class="nd-menu"></span><span class="nd-menu"></span><span class="nd-spacer"></span><span class="nd-icon"></span><span class="nd-icon"></span><span class="nd-clock">9:41</span></div>
           <div class="nd-curtain">
-            <div class="nd-top"><span class="nd-status"><i></i>Codex</span><span class="nd-gap" aria-hidden="true"></span><span class="nd-ref">2:155</span></div>
+            <div class="nd-top"><span class="nd-status"><i></i>Codex<em>· 4m</em></span><span class="nd-gap" aria-hidden="true"></span><span class="nd-ref">2:155</span></div>
             <div class="nd-body">
               <div class="nd-surah"><span lang="ar" dir="rtl" data-surah-name="2">البقرة</span><span>AL-BAQARA</span></div>
               <p class="nd-ayah" lang="ar" dir="rtl"><span data-ayah="2:155">وَلَنَبْلُوَنَّكُم بِشَىْءٍ مِّنَ ٱلْخَوْفِ وَٱلْجُوعِ وَنَقْصٍ مِّنَ ٱلْأَمْوَٰلِ وَٱلْأَنفُسِ وَٱلثَّمَرَٰتِ ۗ وَبَشِّرِ ٱلصَّـٰبِرِينَ</span> <span class="ayah-end" aria-hidden="true">۝١٥٥</span></p>
-              <div class="nd-foot" aria-hidden="true"><span>←</span><span>3 ayat this turn</span><span>→</span></div>
+              <div class="nd-foot" aria-hidden="true"><span>←</span><span>3 ayat this turn</span><b>⌕ Search</b><b>⌃ Hide</b><span>→</span></div>
             </div>
+            <div class="nd-pill" aria-hidden="true"></div>
           </div>
         </div>
-        <figcaption class="reader-caption">The default on macOS: it comes out of the notch while your agent works and folds back in when the turn ends. Shown with Codex; it says Claude during a Claude Code turn.</figcaption>
+        <figcaption class="reader-caption">The default on macOS: it comes out of the notch while your agent works and folds back in when the turn ends. Teal while it works, yellow when it needs you, green when it’s done. Shown with Codex; it says Claude during a Claude Code turn.</figcaption>
       </figure>
     </div>
   </section>
@@ -99,9 +100,9 @@
   <div class="wrap">
     <section class="steps" id="how" aria-label="How it works">
       <div class="step"><div class="step-k"><i style="background: var(--teal);"></i>01 · PROMPT</div><h3>You hand off a task</h3><p>The curtain comes out of the notch where you stopped. The first time, it asks where you’d like to start.</p></div>
-      <div class="step"><div class="step-k"><i style="background: var(--teal);"></i>02 · READ</div><h3>Your agent works</h3><p>Click the card and read with ← and →. Every ayah you move is saved locally, instantly.</p></div>
-      <div class="step"><div class="step-k"><i style="background: var(--brass);"></i>03 · NEEDS YOU</div><h3>It asks permission</h3><p>“Codex needs you” or “Claude needs you” slides in. Press Space when you’re ready; your reading isn’t cut off.</p></div>
-      <div class="step"><div class="step-k"><i style="background: var(--ink);"></i>04 · DONE</div><h3>The turn ends</h3><p>Your place is saved and the curtain folds back into the notch. Hover the notch to peek anytime.</p></div>
+      <div class="step"><div class="step-k"><i style="background: var(--teal);"></i>02 · READ</div><h3>Your agent works</h3><p>The notch shows who is working and for how long. Read with ← and →, or press Search to jump to any surah, juz or ayah. Every move is saved instantly.</p></div>
+      <div class="step"><div class="step-k"><i style="background: var(--brass);"></i>03 · NEEDS YOU</div><h3>It asks permission</h3><p>“Codex needs you” or “Claude needs you” slides in, in yellow. Press Space when you’re ready; your reading isn’t cut off.</p></div>
+      <div class="step"><div class="step-k"><i style="background: var(--ink);"></i>04 · DONE</div><h3>The turn ends</h3><p>“Claude worked 4 min · saved at 2:157” in green, then it folds back into the notch. Hover the notch to peek anytime.</p></div>
     </section>
 
     <section class="cards" aria-label="Principles">
@@ -189,8 +190,8 @@
     </div>
   </div>
 </div>
-<script type="module" src="donate.js?v=0.7.0"></script>
-<script type="module" src="copy.js?v=0.7.0"></script>
-<script type="module" src="updates.js?v=0.7.0"></script>
+<script type="module" src="donate.js?v=0.7.5"></script>
+<script type="module" src="copy.js?v=0.7.5"></script>
+<script type="module" src="updates.js?v=0.7.5"></script>
 </body>
 </html>

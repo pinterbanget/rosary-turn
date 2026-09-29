@@ -8,7 +8,7 @@
 //                           reading (mouse on the card): then it waits for you
 //   hover the notch       → peek; move away and it folds back
 import { VERSION } from './config.js';
-import { QUICK_STARTS, arabicDigits, resolveQuery } from './quran-core.js';
+import { QUICK_STARTS, arabicDigits, buildSearchIndex, resolveQuery } from './quran-core.js';
 import { fillAyah as fillVerified, loadText } from './text.js';
 
 const $ = (id) => document.getElementById(id);
@@ -66,6 +66,7 @@ function setOpen(on, by = 'agent', { focus = false } = {}) {
     open = false;
     openedBy = null;
     waitForLeave = false;
+    closeSearch();
     send({ type: 'close' });
   }
 }
@@ -93,6 +94,7 @@ function onLeave() {
   hovering = false;
   clearTimeout(peekTimer);
   const busy = agent.status === 'working' || agent.status === 'needs_you';
+  if (searching()) return; // typing a search: stay open until it's done
   if (waitForLeave) closeSoon(1000);
   else if (open && openedBy === 'user' && !busy) closeSoon(600);
 }
@@ -139,15 +141,34 @@ function setAlert(kind, title) {
   setTimeout(updateMore, 300);
 }
 
+// How long the agent has worked: "<1m", "4m", "1h 5m" beside the notch;
+// "under a minute", "4 min", "1 h 5 min" in the strip.
+function duration(fromIso, toMs = Date.now()) {
+  const from = Date.parse(fromIso);
+  if (!Number.isFinite(from)) return null;
+  const min = Math.max(0, Math.floor((toMs - from) / 60_000));
+  const h = Math.floor(min / 60), m = min % 60;
+  return {
+    short: min < 1 ? '<1m' : h ? `${h}h ${m}m` : `${m}m`,
+    long: min < 1 ? 'under a minute' : h ? `${h} h ${m} min` : `${m} min`,
+  };
+}
+
 function renderStatus() {
   const name = NAMES[agent.agent] || 'Agent';
   const status = agent.status || 'idle';
   // The host's tiny pill on the notch breathes while the agent works.
   if (status !== sentStatus) { sentStatus = status; send({ type: 'status', value: status }); }
   $('card').dataset.status = status;
-  // Beside the notch there's only room for a name; the dot says the rest.
+  // Beside the notch: the agent, how long it has worked, and a coloured dot
+  // (teal working, yellow needs you, green done).
+  const t = agent.last_turn;
+  const took = status === 'done' && t ? duration(t.started_at, Date.parse(t.ended_at)) : null;
+  const running = status === 'working' || status === 'needs_you' ? duration(agent.turn_started_at) : null;
   $('status-text').textContent = status === 'idle' ? 'Quran Turn' : name;
-  $('status').title = status === 'working' ? `${name} is working` : status === 'needs_you' ? `${name} needs you` : status === 'done' ? 'Turn finished' : '';
+  $('status-time').textContent = (running || took)?.short || '';
+  $('status').title = status === 'working' ? `${name} has been working for ${running?.long || 'a moment'}`
+    : status === 'needs_you' ? `${name} needs you` : took ? `${name} worked for ${took.long}` : '';
   $('back').textContent = `Back to ${name}`;
   $('back').hidden = !canSwitch;
   $('back-key').hidden = !canSwitch;
@@ -157,9 +178,8 @@ function renderStatus() {
     : `${pos.surah}:${pos.ayah}`;
 
   if (status === 'needs_you') setAlert('needs_you', `${name} needs you`);
-  else if (status === 'done' && agent.last_turn) {
-    const t = agent.last_turn;
-    setAlert('done', `Saved at ${t.to} · ${t.ayat} ${t.ayat === 1 ? 'ayah' : 'ayat'}`);
+  else if (status === 'done' && t) {
+    setAlert('done', took ? `${name} worked ${took.long} · saved at ${t.to}` : `Saved at ${t.to} · ${t.ayat} ${t.ayat === 1 ? 'ayah' : 'ayat'}`);
   } else setAlert(null);
 }
 
@@ -220,7 +240,7 @@ function showStart() {
     const [r] = resolveQuery(qs.query, meta, quran.bySurah);
     if (r) chips.push([qs.label, () => go({ surah: r.surah, ayah: r.ayah })]);
   }
-  chips.push(['Search…', () => post('/api/open')]);
+  chips.push(['Search…', () => openSearch()]);
   $('chips').replaceChildren(...chips.map(([label, pick]) => {
     const b = document.createElement('button');
     b.type = 'button';
@@ -236,6 +256,87 @@ function hideStart() {
   if ($('start').hidden) return;
   $('start').hidden = true;
   reportHeight();
+}
+
+// ── Search / jump to ────────────────────────────────────────────────────────
+// The same search as the full reader (quran-core.js): surah names and their
+// meanings, juz, page, ayah numbers and Arabic words. Every ayah shown in the
+// results goes through fillVerified, exactly like the reading view.
+
+let searchIndex = null; // built on the first Arabic search
+const searching = () => !$('search').hidden;
+const tag = (name, props = {}, ...kids) => { const n = Object.assign(document.createElement(name), props); n.append(...kids); return n; };
+
+function resultRow(r) {
+  const [, ayas, , , ar, tr, en] = meta.Sura[r.surah];
+  const num = r.kind === 'juz' ? `Juz ${r.n}` : r.kind === 'page' ? `p. ${r.n}` : r.kind === 'ayah' ? `${r.surah}:${r.ayah}` : String(r.surah);
+  const title = r.kind === 'juz' || r.kind === 'page' ? `${tr} ${r.surah}:${r.ayah}` : tr;
+  const sub = r.kind === 'surah' ? `${en} · ${ayas} ayat` : r.kind === 'ayah' ? en : `starts at ${r.surah}:${r.ayah}`;
+  const name = tag('span', { className: 'n-rname' }, title);
+  if (r.kind === 'ayah') {
+    const line = tag('span', { className: 'n-rayah', lang: 'ar', dir: 'rtl' });
+    fillVerified(line, quran, r.surah, r.ayah);
+    name.append(line);
+  } else {
+    name.append(tag('span', { className: 'n-rsub', textContent: sub }));
+  }
+  const b = tag('button', { type: 'button', className: 'n-result' },
+    tag('span', { className: 'n-rnum', textContent: num }), name,
+    tag('span', { className: 'n-rar', lang: 'ar', dir: 'rtl', textContent: ar }));
+  b.addEventListener('click', () => { closeSearch(); hideStart(); go({ surah: r.surah, ayah: r.ayah }); });
+  return tag('li', {}, b);
+}
+
+function renderResults() {
+  if (!quran) return;
+  const q = $('search-q').value.trim();
+  let items;
+  if (!q) {
+    items = QUICK_STARTS.map((qs) => resolveQuery(qs.query, meta, quran.bySurah)[0]).filter(Boolean);
+  } else {
+    if (!searchIndex && /[؀-ۿ]/.test(q)) searchIndex = buildSearchIndex(quran.bySurah);
+    items = resolveQuery(q, meta, quran.bySurah, searchIndex, { limit: 30 });
+  }
+  const rows = items.map(resultRow);
+  if (q && !items.length) rows.push(tag('li', { className: 'n-none', textContent: 'Nothing found. Try “kahfi”, “juz 30”, “2:255”, “hal 50” or a few Arabic words.' }));
+  const full = tag('button', { type: 'button', className: 'n-result' }, tag('span', { className: 'n-rnum', textContent: '⤢' }),
+    tag('span', { className: 'n-rname' }, 'Browse all 114 surahs', tag('span', { className: 'n-rsub', textContent: 'in the full reader' })), '');
+  full.addEventListener('click', () => post('/api/open'));
+  rows.push(tag('li', {}, full));
+  $('results').replaceChildren(...rows);
+  $('results').scrollTop = 0;
+}
+
+function openSearch() {
+  if (!quran) return;
+  lastInteract = Date.now();
+  if (!open) setOpen(true, 'user', { focus: true });
+  else send({ type: 'open', focus: true }); // make sure the card takes the keyboard
+  $('stage-wrap').hidden = true;
+  $('start').hidden = true;
+  $('search').hidden = false;
+  $('search-q').value = '';
+  renderResults();
+  $('search-q').focus();
+}
+
+function closeSearch() {
+  if (!searching()) return;
+  $('search').hidden = true;
+  $('stage-wrap').hidden = false;
+  updateMore();
+}
+
+// Enter opens the first result; ↓ / ↑ move through them.
+function onSearchKey(e) {
+  lastInteract = Date.now();
+  e.stopPropagation(); // Esc closes the search, not the whole card
+  const buttons = [...$('results').querySelectorAll('button.n-result')];
+  const i = buttons.indexOf(document.activeElement);
+  if (e.key === 'Escape') { e.preventDefault(); closeSearch(); }
+  else if (e.key === 'Enter' && e.target === $('search-q')) { e.preventDefault(); buttons[0]?.click(); }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); (buttons[i + 1] || buttons[0])?.focus(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); (i <= 0 ? $('search-q') : buttons[i - 1]).focus(); }
 }
 
 // ── Actions ─────────────────────────────────────────────────────────────────
@@ -263,6 +364,7 @@ function updateMore() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (searching()) return; // the search box has its own keys (onSearchKey)
   lastInteract = Date.now();
   const k = e.key;
   const alert = $('alert').classList.contains('show');
@@ -277,7 +379,7 @@ function onKey(e) {
   // Arabic reads right-to-left, so ← moves forward.
   if (k === 'ArrowLeft' || k === 'j' || k === ' ') { e.preventDefault(); step(1); }
   else if (k === 'ArrowRight' || k === 'k') { e.preventDefault(); step(-1); }
-  else if (k === 'g') { e.preventDefault(); post('/api/open'); }
+  else if (k === 'g' || k === '/') { e.preventDefault(); openSearch(); }
 }
 
 // After a plugin update: new page code, and a new host if its source changed.
@@ -324,6 +426,11 @@ async function init() {
   $('next').addEventListener('click', () => step(1));
   $('prev').addEventListener('click', () => step(-1));
   $('hide').addEventListener('click', hide);
+  $('search-btn').addEventListener('click', () => (searching() ? closeSearch() : openSearch()));
+  $('search-close').addEventListener('click', closeSearch);
+  $('search-q').addEventListener('input', () => { lastInteract = Date.now(); renderResults(); });
+  $('search-form').addEventListener('submit', (e) => e.preventDefault());
+  $('search').addEventListener('keydown', onSearchKey);
   $('back').addEventListener('click', backToAgent);
   $('stage').addEventListener('scroll', updateMore, { passive: true });
   document.addEventListener('keydown', onKey);
@@ -348,6 +455,8 @@ async function init() {
   renderAyah();
   renderStatus();
   send({ type: 'ready' });
+  // Keep the "4m" beside the notch current while the agent works.
+  setInterval(() => { if (agent.status === 'working' || agent.status === 'needs_you') renderStatus(); }, 20_000);
 
   const events = new EventSource('/api/events?surface=notch');
   let lostSince = 0;

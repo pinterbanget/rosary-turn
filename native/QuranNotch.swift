@@ -88,9 +88,10 @@ final class ShapeView: NSView {
   let mask = CAShapeLayer()
   let content = NSView()
   // A tiny pill on the notch's bottom edge: Quran Turn is here. Barely there
-  // at rest, breathing while your agent works, brighter under the pointer.
+  // at rest, breathing while your agent works, yellow when it needs you,
+  // green when the turn is done, teal under the pointer.
   let indicator = CALayer()
-  var agentWorking = false { didSet { updateIndicator() } }
+  var agentStatus = "idle" { didSet { if agentStatus != oldValue { updateIndicator() } } }
   var hovering = false { didSet { updateIndicator() } }
   var onHover: ((Bool) -> Void)?
   var onClick: (() -> Void)?
@@ -112,6 +113,8 @@ final class ShapeView: NSView {
   static let racingGreen = NSColor(srgbRed: 0.0, green: 0.26, blue: 0.15, alpha: 1)   // #004226
   static let restGreen = NSColor(srgbRed: 0.06, green: 0.36, blue: 0.24, alpha: 1)    // a touch brighter
   static let hoverTeal = NSColor(srgbRed: 0.14, green: 0.61, blue: 0.52, alpha: 1)    // #239c84, the reader's teal
+  static let needsYellow = NSColor(srgbRed: 0.83, green: 0.62, blue: 0.20, alpha: 1)  // soft brass
+  static let doneGreen = NSColor(srgbRed: 0.22, green: 0.62, blue: 0.40, alpha: 1)    // a clear, calm green
 
   func updateIndicator() {
     indicator.removeAnimation(forKey: "breathe")
@@ -119,7 +122,11 @@ final class ShapeView: NSView {
     CATransaction.setAnimationDuration(0.25)
     if hovering {
       indicator.backgroundColor = ShapeView.hoverTeal.cgColor
-    } else if agentWorking {
+    } else if agentStatus == "needs_you" {
+      indicator.backgroundColor = ShapeView.needsYellow.cgColor
+    } else if agentStatus == "done" {
+      indicator.backgroundColor = ShapeView.doneGreen.cgColor
+    } else if agentStatus == "working" {
       indicator.backgroundColor = ShapeView.restGreen.cgColor
       if !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
         let a = CABasicAnimation(keyPath: "backgroundColor")
@@ -201,6 +208,7 @@ final class NotchHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
   var size = CGSize.zero // the shape's current body size (without flares)
   var timer: Timer?
   var loadFailures = 0
+  var snapshotSignal: DispatchSourceSignal?
 
   init(options: Options) {
     self.options = options
@@ -248,9 +256,21 @@ final class NotchHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     if geo.hasNotch { panel.orderFrontRegardless() } // sits on the notch, invisible
     load()
 
-    // With QURAN_NOTCH_SNAPSHOT, also capture the folded notch and its pill.
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-      if self?.isOpen == false { self?.writeSnapshot(suffix: "-idle") }
+    // With QURAN_NOTCH_SNAPSHOT, also capture the folded notch and its pill,
+    // and capture again on every SIGUSR1 (`kill -USR1 <pid>`).
+    if ProcessInfo.processInfo.environment["QURAN_NOTCH_SNAPSHOT"] != nil {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+        if self?.isOpen == false { self?.writeSnapshot(suffix: "-idle") }
+      }
+      signal(SIGUSR1, SIG_IGN)
+      let source = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
+      var shots = 0
+      source.setEventHandler { [weak self] in
+        shots += 1
+        self?.writeSnapshot(suffix: "-\(shots)")
+      }
+      source.resume()
+      snapshotSignal = source
     }
 
     // QURAN_NOTCH_DEBUG=1: print the page's curtain state twice a second.
@@ -445,7 +465,7 @@ final class NotchHost: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     case "height":
       if let v = body["value"] as? Double { setHeight(CGFloat(v)) }
     case "status":
-      shape.agentWorking = (body["value"] as? String) == "working"
+      shape.agentStatus = (body["value"] as? String) ?? "idle"
     case "quit": NSApp.terminate(nil)
     default: break
     }

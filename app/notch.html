@@ -14,7 +14,7 @@
 <main class="n-card" id="card" data-status="idle">
   <!-- Level with the notch: who's working on the left, where you are on the right. -->
   <header class="n-top" id="top">
-    <span class="n-status" id="status" title=""><i class="n-dot" aria-hidden="true"></i><span id="status-text">Quran Turn</span></span>
+    <span class="n-status" id="status" title=""><i class="n-dot" aria-hidden="true"></i><span id="status-text">Quran Turn</span><span class="n-time" id="status-time"></span></span>
     <span class="n-gap" aria-hidden="true"></span>
     <span class="n-ref" id="ref"></span>
   </header>
@@ -42,9 +42,21 @@
     <span class="n-more" id="more" aria-hidden="true">scroll ↓</span>
   </div>
 
+  <!-- Search, right in the notch: surah, juz, ayah, page or Arabic words. -->
+  <div class="n-search" id="search" hidden role="search">
+    <form class="n-search-bar" id="search-form" autocomplete="off">
+      <input id="search-q" type="search" placeholder="kahfi · juz 30 · 2:255 · hal 50 · الرحمن" spellcheck="false" dir="auto" aria-label="Go to a surah, juz, ayah, page or Arabic words">
+      <button type="button" class="n-x" id="search-close" aria-label="Close search (esc)" title="Close (esc)">×</button>
+    </form>
+    <ul class="n-results" id="results" aria-live="polite"></ul>
+  </div>
+
   <footer class="n-foot">
     <button type="button" class="n-btn" id="next" title="Next ayah (←)" aria-label="Next ayah">←</button>
     <span class="n-counter" id="counter"></span>
+    <button type="button" class="n-hide" id="search-btn" title="Go to a surah, juz, ayah, page or Arabic words (g)" aria-label="Search and jump to">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>Search
+    </button>
     <button type="button" class="n-hide" id="hide" title="Fold back into the notch (esc). Hover the notch to bring it back." aria-label="Hide: fold back into the notch">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>Hide
     </button>

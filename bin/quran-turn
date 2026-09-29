@@ -3,7 +3,7 @@
 import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildSearchIndex, resolveQuery } from '../app/quran-core.js';
-import { VERSION, formatRef, loadMeta, loadQuran } from '../src/quran.mjs';
+import { VERSION, compareVersions, formatRef, loadMeta, loadQuran } from '../src/quran.mjs';
 import { buildMacHost, notchSupported } from '../src/notch.mjs';
 import { DEFAULT_PORT, startServer } from '../src/server.mjs';
 import { applyHook, home, logError, readJson, readSessions, setPosition, writeJson } from '../src/state.mjs';
@@ -41,12 +41,14 @@ function stopOldServer() {
   } catch {}
 }
 
-// Make sure a reader server of *this* version is running. After a plugin update
-// the old server may still be up with old code: ask it to step aside first.
+// Make sure a reader server of this version (or newer) is running. After a
+// plugin update the old server may still be up with old code: ask it to step
+// aside. A *newer* server stays: another agent session already has the update,
+// and this one just hasn't reloaded its plugins yet.
 async function ensureServer() {
   try {
     const h = await call('/api/health');
-    if (h.app === 'quran-turn' && h.version === VERSION) return true;
+    if (h.app === 'quran-turn' && compareVersions(h.version, VERSION) >= 0) return true;
     if (h.app === 'quran-turn') {
       // v0.4.1+ servers step aside on request; older ones are stopped directly.
       const asked = await call('/api/shutdown', {}).then(() => true, () => false);
@@ -233,12 +235,14 @@ try {
         await buildMacHost();
       }
       writeJson('config.json', { ...config, surface: want });
-      // A running reader switches over now: the notch steps aside for the
-      // window, or comes out for your next turn.
-      try {
-        await call('/api/refresh', {});
-        if (want !== 'window') await call('/api/surface/relaunch', {});
-      } catch {}
+      // Switch over now: the notch steps aside for the window, or comes up
+      // (on the notch it stays folded until your next turn; hover to peek).
+      if (await ensureServer()) {
+        try {
+          await call('/api/refresh', {});
+          if (want !== 'window') await call('/api/surface/relaunch', {});
+        } catch {}
+      }
       console.log(want === 'window'
         ? 'The reader opens in its own window.'
         : want === 'notch' || process.platform === 'darwin'
