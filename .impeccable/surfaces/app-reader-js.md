@@ -19,4 +19,6 @@ Motion: preserve upstream curtain-host behavior and OpenRosary theme reveal. Rea
 
 Evidence: `.impeccable/review/desktop.png` and `mobile.png` show the light reader; `curtain.png` shows the dark 420px curtain; `curtain-completion.png` shows light completion; `selection.png` shows dark selection. The final finish reviewer scored the P1 curtain clipping fix resolved and gave disposition **ship** for that correction. This records the review's actual scope. macOS native execution remains unverified.
 
-Unresolved: macOS host execution. No visual identity decision remains open; preserve source palette, typography, and spacing.
+Dark mode uses a pure black background and neutral gray panels and text, per the user's updated direction. Blue titles, progress, and working-session status remain; light mode retains the source palette.
+
+Unresolved: macOS host execution. No visual identity decision remains open; preserve the updated palettes, source typography, and spacing.

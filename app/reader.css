@@ -1,5 +1,6 @@
 @font-face { font-family: Geist; src: url('/fonts/Geist.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
 :root { --font-geist-sans: Geist; }
+:root[data-theme='dark'] { --bg: #000000; --panel: #101010; --muted: #b5b5b5; --text: #f6f6f6; }
 [hidden] { display: none !important; }
 button { cursor: pointer; }
 button:disabled { opacity: .5; cursor: default; }

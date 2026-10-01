@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-01T17:14:10.616Z",
+  "generatedAt": "2026-10-01T17:35:59.546Z",
   "title": "Design System: Rosary Turn",
   "extensions": {
     "colorMeta": {
@@ -36,14 +36,14 @@
         "role": "neutral",
         "displayName": "Night Ground",
         "tonalRamp": [
-          "oklch(15% 0.03229 258.68)",
-          "oklch(26% 0.03229 258.68)",
-          "oklch(38% 0.03229 258.68)",
-          "oklch(49% 0.03229 258.68)",
-          "oklch(61% 0.03229 258.68)",
-          "oklch(72% 0.03229 258.68)",
-          "oklch(84% 0.03229 258.68)",
-          "oklch(95% 0.03229 258.68)"
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
         ]
       },
       "background-light": {
@@ -64,14 +64,14 @@
         "role": "neutral",
         "displayName": "Night Panel",
         "tonalRamp": [
-          "oklch(15% 0.04065 260.82)",
-          "oklch(26% 0.04065 260.82)",
-          "oklch(38% 0.04065 260.82)",
-          "oklch(49% 0.04065 260.82)",
-          "oklch(61% 0.04065 260.82)",
-          "oklch(72% 0.04065 260.82)",
-          "oklch(84% 0.04065 260.82)",
-          "oklch(95% 0.04065 260.82)"
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
         ]
       },
       "panel-light": {
@@ -92,14 +92,14 @@
         "role": "neutral",
         "displayName": "Pale Text",
         "tonalRamp": [
-          "oklch(15% 0.00574 264.53)",
-          "oklch(26% 0.00574 264.53)",
-          "oklch(38% 0.00574 264.53)",
-          "oklch(49% 0.00574 264.53)",
-          "oklch(61% 0.00574 264.53)",
-          "oklch(72% 0.00574 264.53)",
-          "oklch(84% 0.00574 264.53)",
-          "oklch(95% 0.00574 264.53)"
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
         ]
       },
       "text-light": {
@@ -120,14 +120,14 @@
         "role": "neutral",
         "displayName": "Mist Text",
         "tonalRamp": [
-          "oklch(15% 0.02918 256.50)",
-          "oklch(26% 0.02918 256.50)",
-          "oklch(38% 0.02918 256.50)",
-          "oklch(49% 0.02918 256.50)",
-          "oklch(61% 0.02918 256.50)",
-          "oklch(72% 0.02918 256.50)",
-          "oklch(84% 0.02918 256.50)",
-          "oklch(95% 0.02918 256.50)"
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
         ]
       },
       "muted-light": {
@@ -320,9 +320,9 @@
   ],
   "narrative": {
     "northStar": "The OpenRosary Reader",
-    "overview": "The OpenRosary Reader preserves the user's requested 1:1 web feel: blue accent, cool grounds, Geist type, restrained controls, and space around prayer text. The source interface is the visual authority. This record merges the build's provisional direction with implemented CSS; its descriptive names label observed roles rather than introduce a new visual identity.\n\nThe system uses one column and tonal panels. Coding-session information occupies a compact strip, leaving prayer content dominant. Authorship remains visible in a small linked footer. Route strategy and the bounded native-curtain adaptation live in `.impeccable/surfaces/app-reader-js.md`.",
+    "overview": "The OpenRosary Reader preserves the user's requested 1:1 web feel: blue accents, pure black and neutral dark grounds, cool light grounds, Geist type, restrained controls, and space around prayer text. The source interface is the visual authority. This record merges the build's provisional direction with implemented CSS; its descriptive names label observed roles rather than introduce a new visual identity.\n\nThe system uses one column and tonal panels. Coding-session information occupies a compact strip, leaving prayer content dominant. Authorship remains visible in a small linked footer. Route strategy and the bounded native-curtain adaptation live in `.impeccable/surfaces/app-reader-js.md`.",
     "keyCharacteristics": [
-      "Cool neutral grounds with one blue accent in each theme.",
+      "Pure black and neutral dark grounds, cool light grounds, and one blue accent in each theme.",
       "Local Geist with bold centered headings and regular prayer text.",
       "One scrollable prayer panel, slim progress, and quiet navigation.",
       "Original Quran Turn and OpenRosary authorship visible in the footer."
@@ -330,7 +330,7 @@
     "rules": [
       {
         "name": "The Theme Pair Rule",
-        "body": "Use the active background, panel, text, muted, accent, and glass custom properties together; preserve both OpenRosary theme sets.",
+        "body": "Use the active background, panel, text, muted, accent, and glass custom properties together. Preserve the user’s black dark palette and OpenRosary’s light palette.",
         "section": "colors"
       },
       {
@@ -340,7 +340,7 @@
       }
     ],
     "dos": [
-      "Do preserve the OpenRosary theme pairs, local Geist, type hierarchy, and spacing.",
+      "Do preserve the black dark palette, OpenRosary light palette, local Geist, type hierarchy, and spacing.",
       "Do retain the parenthesized wordmark and lowercase mystery choices.",
       "Do keep original authorship visible and linked.",
       "Do keep text status, progress count, keyboard focus, and visible navigation alongside color and gestures.",

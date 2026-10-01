@@ -4,13 +4,13 @@ description: OpenRosary's reader adapted to coding sessions.
 colors:
   accent-dark: "#9dceff"
   accent-light: "#1769b0"
-  background-dark: "#08111f"
+  background-dark: "#000000"
   background-light: "#f5f8fc"
-  panel-dark: "#101b2e"
+  panel-dark: "#101010"
   panel-light: "#ffffff"
-  text-dark: "#f6f8fc"
+  text-dark: "#f6f6f6"
   text-light: "#10233b"
-  muted-dark: "#b5c2d4"
+  muted-dark: "#b5b5b5"
   muted-light: "#52657d"
   glass-dark: "rgba(255, 255, 255, 0.03)"
   glass-light: "rgba(23, 105, 176, 0.1)"
@@ -95,12 +95,12 @@ components:
 
 **Creative North Star: "The OpenRosary Reader"**
 
-The OpenRosary Reader preserves the user's requested 1:1 web feel: blue accent, cool grounds, Geist type, restrained controls, and space around prayer text. The source interface is the visual authority. This record merges the build's provisional direction with implemented CSS; its descriptive names label observed roles rather than introduce a new visual identity.
+The OpenRosary Reader preserves OpenRosary's Geist type, restrained controls, and space around prayer text. The user's later direction replaces the blue dark grounds with pure black and neutral panels, while keeping blue titles, progress, and working-session status. Light mode retains the OpenRosary palette.
 
 The system uses one column and tonal panels. Coding-session information occupies a compact strip, leaving prayer content dominant. Authorship remains visible in a small linked footer. Route strategy and the bounded native-curtain adaptation live in `.impeccable/surfaces/app-reader-js.md`.
 
 **Key Characteristics:**
-- Cool neutral grounds with one blue accent in each theme.
+- Pure black and neutral dark grounds, cool light grounds, and one blue accent in each theme.
 - Local Geist with bold centered headings and regular prayer text.
 - One scrollable prayer panel, slim progress, and quiet navigation.
 - Original Quran Turn and OpenRosary authorship visible in the footer.
@@ -109,7 +109,7 @@ Source evidence: `app/openrosary.css` preserves the OpenRosary stylesheet; `app/
 
 ## Colors
 
-The palette pairs blue with cool neutrals. Frontmatter records both themes; runtime custom properties select the active set.
+The palette pairs blue accents with black and neutral gray in dark mode, and cool neutrals in light mode. Frontmatter records both themes; runtime custom properties select the active set.
 
 ### Primary
 - **Sky Blue** (`accent-dark`): mystery headings, suggested choices, progress, and working-session status on dark surfaces.
@@ -122,7 +122,7 @@ The palette pairs blue with cool neutrals. Frontmatter records both themes; runt
 - **Mist Text / Slate Text** (`muted-dark` / `muted-light`): navigation, progress count, instructions, and credits.
 - **Quiet Edge** (`glass-dark` / `glass-light`): subtle panel and theme-control borders and the session divider.
 
-**The Theme Pair Rule.** Use the active background, panel, text, muted, accent, and glass custom properties together; preserve both OpenRosary theme sets.
+**The Theme Pair Rule.** Use the active background, panel, text, muted, accent, and glass custom properties together. Preserve the user's black dark palette and OpenRosary's light palette.
 
 ## Typography
 
@@ -188,7 +188,7 @@ A centered footer links Quran Turn by Rizaldy and OpenRosary. Links retain under
 ## Do's and Don'ts
 
 ### Do:
-- **Do** preserve the OpenRosary theme pairs, local Geist, type hierarchy, and spacing.
+- **Do** preserve the black dark palette, OpenRosary light palette, local Geist, type hierarchy, and spacing.
 - **Do** retain the parenthesized wordmark and lowercase mystery choices.
 - **Do** keep original authorship visible and linked.
 - **Do** keep text status, progress count, keyboard focus, and visible navigation alongside color and gestures.

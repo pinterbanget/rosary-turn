@@ -6,7 +6,7 @@ Pray the Rosary while your coding agent works.
 
 Send a coding prompt: the Rosary reader opens at your saved prayer. When the agent needs approval, the status strip tells you. When the turn finishes, your place is saved. The native curtain folds away; regular browser windows use the original macOS switching behavior. Windows uses a dedicated Edge/Chrome app window by default, with the original experimental top-of-screen curtain available as an option.
 
-The reader uses OpenRosary's exact stylesheet, Geist font, centered mystery and prayer headings, scrollable prayer pane, and progress bar. It adds a compact session strip, mouse navigation, and permanent attribution. No runtime dependencies, account, analytics, or external network calls. Requires Node.js 18+.
+The reader uses OpenRosary's source stylesheet, Geist font, centered mystery and prayer headings, scrollable prayer pane, and progress bar. Dark mode adapts it to a pure black background with neutral panels, retaining blue accents. It adds a compact session strip, mouse navigation, and permanent attribution. No runtime dependencies, account, analytics, or external network calls. Requires Node.js 18+.
 
 ## Try it
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2] - 2026-10-02
+
+- Use a pure black dark background with neutral panels and text, retaining blue accents.
+
 ## [0.1.1] - 2026-10-02
 
 - Group language, Latin prayers, and theme controls under an options dropdown.
