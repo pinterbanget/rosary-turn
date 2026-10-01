@@ -260,7 +260,8 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
       if (pathname === '/api/surface') {
         // Long poll: answer as soon as the state is newer than `since` (or after 25 s).
         const since = Number(new URL(req.url, url).searchParams.get('since')) || 0;
-        if (surfaceState.seq > since) return json(res, 200, surfaceState);
+          // The counter restarts with the server; an older host may be ahead of it.
+          if (surfaceState.seq !== since) return json(res, 200, surfaceState);
         let done = false;
         const reply = () => {
           if (done) return;

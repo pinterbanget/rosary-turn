@@ -143,6 +143,21 @@ test('server serves offline reader on Windows paths and refuses bad writes', asy
     assert.equal((await (await get('api/health')).json()).app, 'rosary-turn');
   } finally { app.close(); }
 });
+test('curtain controller recovers from a restarted counter and receives repeated close requests', async () => {
+  const app = await startServer({ port: 0, idleExit: false, win: { canSwitch: () => false } });
+  const poll = since => fetch(app.url + 'api/surface?since=' + since, { signal: AbortSignal.timeout(1000) }).then(res => res.json());
+  const send = type => fetch(app.url + 'api/surface', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type }) }).then(res => res.json());
+  try {
+    assert.deepEqual(await poll(999), { seq: 0, open: false, height: 0, chrome: 0, focus: false, quit: false });
+    await send('open');
+    const opened = await poll(0); assert.equal(opened.open, true);
+    const waiting = poll(opened.seq);
+    await send('close');
+    assert.equal((await waiting).open, false);
+    await send('close');
+    assert.equal((await poll(2)).open, false);
+  } finally { app.close(); }
+});
 test('both plugin manifests, CLI and hooks use the Rosary package', () => {
   const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
   const pkg = JSON.parse(read('package.json'));

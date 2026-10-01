@@ -4,9 +4,11 @@ const $ = id => document.getElementById(id);
 const notch = location.pathname === '/notch.html';
 if (notch) { document.documentElement.dataset.surface = 'notch'; document.title = 'Rosary Turn notch'; }
 let position, agent = { status: 'idle' }, canSwitch = false;
-let saving = Promise.resolve(), pending = 0, dirty = false, lastStatus, lastTurn, open = false, hovered = false, dismissed, closeTimer;
+let saving = Promise.resolve(), pending = 0, dirty = false, lastStatus, lastTurn, hovered = false, dismissed = null, closeTimer;
 let snapshotVersion, hostBuild, connected = true;
+let surfaceMessages = Promise.resolve();
 const native = window.webkit?.messageHandlers?.notch;
+const hosted = notch && (Boolean(native) || new URLSearchParams(location.search).get('host') === 'win');
 const names = { claude: 'Claude', codex: 'Codex' };
 const idNames = { joyful: 'gembira', luminous: 'terang', sorrowful: 'sedih', glorious: 'mulia' };
 async function post(path, body) {
@@ -15,22 +17,22 @@ async function post(path, body) {
   return res.json();
 }
 function send(message) {
-  if (!notch) return;
-  if (native) native.postMessage(message);
-  else post('/api/surface', message).catch(() => {});
+  if (!hosted) return Promise.resolve();
+  if (native) { native.postMessage(message); return Promise.resolve(); }
+  surfaceMessages = surfaceMessages.catch(() => {}).then(() => post('/api/surface', message));
+  return surfaceMessages;
 }
 function setOpen(on, focus = false) {
   clearTimeout(closeTimer);
   if (on) {
-    send({ type: 'height', value: 420, chrome: Math.max(0, window.outerHeight - window.innerHeight) });
-    if (!open || focus) send({ type: 'open', focus });
-  } else if (open) send({ type: 'close' });
-  open = on;
+    send({ type: 'height', value: 420, chrome: Math.max(0, window.outerHeight - window.innerHeight) }).catch(() => {});
+    send({ type: 'open', focus }).catch(() => {});
+  } else send({ type: 'close' }).catch(() => {});
 }
 window.__notch = event => {
-  if (event === 'hover-in') { hovered = true; setOpen(true); }
+  if (event === 'hover-in') { hovered = true; if (dismissed !== agent.turn_started_at) setOpen(true); }
   if (event === 'hover-out') { hovered = false; if (agent.status === 'done' || agent.status === 'idle') closeTimer = setTimeout(() => setOpen(false), 700); }
-  if (event === 'click') setOpen(true, true);
+  if (event === 'click') { dismissed = null; setOpen(true, true); }
 };
 document.documentElement.addEventListener('mouseenter', () => { hovered = true; clearTimeout(closeTimer); });
 document.documentElement.addEventListener('mouseleave', () => { hovered = false; if (notch && ['done', 'idle'].includes(agent.status)) closeTimer = setTimeout(() => setOpen(false), 700); });
@@ -48,9 +50,9 @@ function renderStatus() {
   document.querySelector('.agent-strip').dataset.status = agent.status;
   $('back-agent').hidden = !canSwitch;
   $('back-agent').textContent = `back to ${names[agent.agent] || 'agent'}`;
-  $('dismiss').hidden = !notch;
-  if (!notch) return;
-  send({ type: 'status', value: agent.status });
+  $('dismiss').hidden = !hosted;
+  if (!hosted) return;
+  if (native) send({ type: 'status', value: agent.status }).catch(() => {});
   const turn = agent.turn_started_at || agent.last_turn?.ended_at;
   if (lastStatus !== agent.status || lastTurn !== turn) {
     if (['working', 'needs_you'].includes(agent.status) && dismissed !== agent.turn_started_at) setOpen(true);
@@ -135,11 +137,17 @@ $('theme').addEventListener('click', () => {
 });
 async function backToAgent() { await saving; await post('/api/back-to-agent', {}); setOpen(false); }
 $('back-agent').addEventListener('click', () => backToAgent().catch(() => showError('Could not switch apps. Return to your agent manually.')));
-$('dismiss').addEventListener('click', () => { dismissed = agent.turn_started_at; setOpen(false); });
+async function dismissReader() {
+  dismissed = agent.turn_started_at;
+  clearTimeout(closeTimer);
+  try { await send({ type: 'close' }); }
+  catch { showError('Could not close the curtain. Try close again.'); return; }
+}
+$('dismiss').addEventListener('click', dismissReader);
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && $('preferences').open) { event.preventDefault(); $('preferences').open = false; $('preferences-toggle').focus(); return; }
   if (event.target.closest('textarea,input:not([type="checkbox"])')) return;
-  if (event.key === 'Escape' && notch) { dismissed = agent.turn_started_at; setOpen(false); }
+  if (event.key === 'Escape' && hosted) dismissReader();
   if (event.code === 'Space' && !event.target.closest('button,a') && canSwitch && ['needs_you', 'done'].includes(agent.status)) { event.preventDefault(); backToAgent().catch(() => {}); return; }
   if (['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); step(event.key === 'ArrowRight' ? 1 : -1); }
   if (['ArrowUp', 'ArrowDown'].includes(event.key) && $('selection').hidden) {
@@ -159,7 +167,7 @@ $('reader').addEventListener('touchend', event => {
 }, { passive: true });
 function accept(snap) {
   if (snapshotVersion && snap.version !== snapshotVersion && !pending && !dirty) location.reload();
-  if (notch && hostBuild && snap.notchBuild !== hostBuild) { send({ type: 'quit' }); post('/api/surface/relaunch', {}).catch(() => {}); }
+  if (hosted && hostBuild && snap.notchBuild !== hostBuild) { send({ type: 'quit' }).then(() => post('/api/surface/relaunch', {})).catch(() => {}); }
   snapshotVersion = snap.version; hostBuild = snap.notchBuild;
   agent = snap.agent; canSwitch = snap.canSwitch;
   if (!pending && !dirty && (!position || (snap.position.revision || 0) >= (position.revision || 0))) { const changed = !position || position.step !== snap.position.step || position.mystery !== snap.position.mystery; position = snap.position; render(); if (changed) $('prayer-pane').scrollTop = 0; }
@@ -171,7 +179,7 @@ try {
   accept(await initial.json());
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   await post('/api/config', { timeZone });
-  const events = new EventSource(`/api/events${notch ? '?surface=notch' : ''}`);
+  const events = new EventSource(`/api/events${hosted ? '?surface=notch' : ''}`);
   events.onmessage = event => { try { connected = true; accept(JSON.parse(event.data)); } catch { showError('Could not load your prayer. Reload this window.'); } };
   events.onerror = () => { connected = false; renderStatus(); };
 } catch { showError('Could not connect to Rosary Turn. Start the local server and retry.'); }

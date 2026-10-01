@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4] - 2026-10-02
+
+- Deliver curtain commands immediately when the server's event counter restarts after an update.
+- Make Close send an explicit hide request and report connection failures.
+- Keep browser previews from controlling the native curtain or blocking its launch.
+- Prevent macOS hover from immediately reopening a manually dismissed curtain.
+
 ## [0.1.3] - 2026-10-02
 
 - Use Up/Down to scroll prayer text and Left/Right to navigate prayers.
