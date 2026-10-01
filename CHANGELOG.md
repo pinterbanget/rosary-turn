@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.1] - 2026-10-02
+
+- Group language, Latin prayers, and theme controls under an options dropdown.
+- Keep prayer navigation with arrow keys available while preference controls have focus.
+- Shorten navigation to previous/next in English and kembali/lanjut in Indonesian.
+
 ## [0.1.0] - 2026-10-01
 
 - Fork Quran Turn by Rizaldy, retaining upstream authorship and MIT notice.

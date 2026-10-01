@@ -20,11 +20,14 @@
       <div class="rosary-container">
         <div class="rosary-header">
           <button id="choose" class="back-link">← mysteries</button>
-          <div class="reader-preferences">
-            <select id="language" class="lang-dropdown" aria-label="Reading language"><option value="en">EN</option><option value="id">ID</option></select>
-            <label class="latin-control"><input id="latin" type="checkbox"> latin</label>
-            <button id="theme" class="colour-control" aria-label="Switch colour mode">light</button>
-          </div>
+          <details id="preferences" class="reader-preferences">
+            <summary id="preferences-toggle" class="colour-control"><span id="options-label">options</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+            <div class="preferences-panel">
+              <div class="preference-row"><span id="language-label">language</span><div class="language-options" role="group" aria-labelledby="language-label"><button id="language-en" class="colour-control" aria-label="English" aria-pressed="true">EN</button><button id="language-id" class="colour-control" aria-label="Bahasa Indonesia" aria-pressed="false">ID</button></div></div>
+              <label class="latin-control"><span id="latin-label">Latin prayers</span><input id="latin" type="checkbox"></label>
+              <div class="preference-row"><span id="theme-label">theme</span><button id="theme" class="colour-control" aria-label="Switch colour mode">light</button></div>
+            </div>
+          </details>
         </div>
         <h1 id="mystery-title" class="mystery-title">today’s mysteries</h1>
         <h2 id="prayer-label" class="prayer-label">loading prayer…</h2>
@@ -35,7 +38,7 @@
           <div id="progress" class="progress-bar" role="progressbar" aria-label="Rosary progress" aria-valuemin="0" aria-valuemax="80" aria-valuenow="0"><div id="progress-fill" class="progress-fill" style="transform: scaleX(0)"></div></div>
           <span id="progress-text" class="progress-text">0/80</span>
         </div>
-        <div class="prayer-navigation"><button id="prev" class="mystery-btn">previous</button><button id="next" class="mystery-btn">next prayer</button></div>
+        <div class="prayer-navigation"><button id="prev" class="mystery-btn">previous</button><button id="next" class="mystery-btn">next</button></div>
         <p id="instructions" class="instructions">use arrow keys or swipe to navigate</p>
         <div id="completion" class="completion" hidden><p id="completion-text">Rosary complete. God bless you.</p><button id="restart" class="mystery-btn">pray again</button></div>
       </div>

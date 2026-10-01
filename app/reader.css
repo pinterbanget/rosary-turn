@@ -22,10 +22,18 @@ body { min-width: 280px; min-height: 100dvh; }
 .rosary-page { min-height: calc(100dvh - 116px); }
 .rosary-container { min-height: inherit; }
 .prayer-container { max-height: max(180px, calc(100dvh - 450px)); }
-.reader-preferences { display: flex; align-items: center; gap: 12px; }
-.latin-control { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
+.reader-preferences { position: relative; }
+.reader-preferences summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; list-style: none; cursor: pointer; }
+.reader-preferences summary::-webkit-details-marker { display: none; }
+.reader-preferences[open] summary svg { transform: rotate(180deg); }
+.preferences-panel { position: absolute; z-index: 10; right: 0; top: calc(100% + 8px); width: 240px; max-width: calc(100vw - 36px); padding: 12px 16px; background: var(--panel); border: 1px solid var(--glass); border-radius: 6px; color: var(--muted); font-size: 13px; }
+.preference-row, .latin-control { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; }
+.latin-control { cursor: pointer; }
+.latin-control input { width: 18px; height: 18px; margin: 0; }
+.language-options { display: flex; gap: 4px; }
+.language-options [aria-pressed='true'] { color: var(--accent); border-color: var(--accent); }
 .colour-control { background: transparent; border: 1px solid var(--glass); border-radius: 6px; padding: 8px; color: var(--muted); font: inherit; font-size: 13px; min-height: 44px; }
-.lang-dropdown { min-height: 44px; }
+.language-options button { min-width: 44px; }
 .prayer-navigation { display: flex; justify-content: space-between; gap: 16px; }
 .prayer-navigation .mystery-btn, .resume-button, .completion .mystery-btn { min-height: 44px; }
 .credits { padding: 8px 20px 18px; color: var(--muted); font-size: 11px; line-height: 1.6; text-align: center; }
@@ -38,8 +46,8 @@ body { min-width: 280px; min-height: 100dvh; }
 .save-error { max-width: 800px; margin: 12px auto; padding: 12px 24px; color: var(--text); background: var(--panel); font-size: 14px; }
 ::-webkit-scrollbar-thumb { background: var(--muted); }
 html { scrollbar-color: var(--muted) var(--bg); scrollbar-width: thin; }
-@media (max-width: 640px) { .agent-strip { padding: 8px 20px; } .reader-preferences { gap: 8px; } .latin-control { font-size: 12px; } }
-@media (max-width: 350px) { .rosary-header { gap: 6px; } .rosary-container { padding: 14px; } .reader-preferences { gap: 5px; } .lang-dropdown { padding-left: 8px; } }
+@media (max-width: 640px) { .agent-strip { padding: 8px 20px; } }
+@media (max-width: 350px) { .rosary-header { gap: 6px; } .rosary-container { padding: 14px; } }
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 /* The native curtain has its own bounded viewport; the prayer pane takes the remaining height. */
 html[data-surface='notch'] #card { height: 420px; overflow: hidden; }

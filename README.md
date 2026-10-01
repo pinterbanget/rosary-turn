@@ -61,7 +61,7 @@ At the first turn of a new local day, the reader selects OpenRosary's suggested 
 
 To preserve OpenRosary's current behavior, Sundays in December/January use Joyful and Sundays in February/March use Sorrowful. This is its existing **month-based approximation**, not a computed liturgical calendar. The browser supplies its local timezone to the server. Prayer labels and readings support English and Indonesian; Latin changes prayer text while retaining the selected reading language. English has 80 steps; Indonesian has 81, preserving OpenRosary's additional opening Kemuliaan.
 
-Navigate with arrow keys, swipe left/right, or previous/next buttons. Vertical swipes scroll long Scripture readings. Colour mode and prayer preferences are remembered. Saving failures remain visible with a retry action.
+Navigate with arrow keys, swipe left/right, or previous/next buttons (kembali/lanjut in Indonesian). Language, Latin prayers, and theme are under the options dropdown. Arrow keys still navigate prayers while its controls have focus; Escape closes the dropdown. Vertical swipes scroll long Scripture readings. Colour mode and prayer preferences are remembered. Saving failures remain visible with a retry action.
 
 ## Commands
 

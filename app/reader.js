@@ -62,8 +62,13 @@ function render() {
   if (!position) return;
   const state = sequence(position), id = position.language === 'id';
   document.documentElement.lang = position.language;
-  $('language').value = position.language;
+  $('language-en').setAttribute('aria-pressed', String(!id));
+  $('language-id').setAttribute('aria-pressed', String(id));
   $('latin').checked = position.prayerLanguage === 'la';
+  $('options-label').textContent = id ? 'opsi' : 'options';
+  $('language-label').textContent = id ? 'bahasa' : 'language';
+  $('latin-label').textContent = id ? 'doa Latin' : 'Latin prayers';
+  $('theme-label').textContent = id ? 'tema' : 'theme';
   $('mystery-title').textContent = state.getCurrentMysteryTitle() || (id ? 'Peristiwa ' : '') + state.getMysteryType() + (id ? '' : ' Mysteries');
   $('prayer-label').textContent = state.getCurrentPrayerLabel();
   $('prayer-text').textContent = state.getCurrentPrayerText();
@@ -74,8 +79,8 @@ function render() {
   $('progress').setAttribute('aria-valuenow', position.step);
   $('prev').disabled = position.step === 0;
   $('next').disabled = state.isComplete();
-  $('prev').textContent = id ? 'sebelumnya' : 'previous';
-  $('next').textContent = id ? 'doa berikutnya' : 'next prayer';
+  $('prev').textContent = id ? 'kembali' : 'previous';
+  $('next').textContent = id ? 'lanjut' : 'next';
   $('choose').textContent = id ? '← peristiwa' : '← mysteries';
   $('instructions').textContent = id ? 'gunakan tombol panah atau geser untuk navigasi' : 'use arrow keys or swipe to navigate';
   $('completion').hidden = !state.isComplete();
@@ -113,13 +118,13 @@ function step(delta) {
   go({ ...position, step: next });
   if (navigator.vibrate) navigator.vibrate(delta < 0 ? [30, 50, 30] : 30);
 }
-function showReader() { $('selection').hidden = true; $('reader').hidden = false; $('choose').focus(); }
+function showReader() { $('preferences').open = false; $('selection').hidden = true; $('reader').hidden = false; $('choose').focus(); }
 $('prev').addEventListener('click', () => step(-1));
 $('next').addEventListener('click', () => step(1));
 $('restart').addEventListener('click', () => { go({ ...position, step: 0 }); $('next').focus(); });
-$('choose').addEventListener('click', () => { $('reader').hidden = true; $('selection').hidden = false; $('mysteries').firstElementChild?.focus(); });
+$('choose').addEventListener('click', () => { $('preferences').open = false; $('reader').hidden = true; $('selection').hidden = false; $('mysteries').firstElementChild?.focus(); });
 $('resume').addEventListener('click', showReader);
-$('language').addEventListener('change', event => { if (position) go(changeLanguage(position, event.target.value)); });
+for (const language of ['en', 'id']) $('language-' + language).addEventListener('click', () => { if (position) go(changeLanguage(position, language)); });
 $('latin').addEventListener('change', event => { if (position) go({ ...position, prayerLanguage: event.target.checked ? 'la' : position.language }); });
 $('retry').addEventListener('click', () => { if (position) save({ ...position }); else location.reload(); });
 $('theme').addEventListener('click', () => {
@@ -132,11 +137,14 @@ async function backToAgent() { await saving; await post('/api/back-to-agent', {}
 $('back-agent').addEventListener('click', () => backToAgent().catch(() => showError('Could not switch apps. Return to your agent manually.')));
 $('dismiss').addEventListener('click', () => { dismissed = agent.turn_started_at; setOpen(false); });
 document.addEventListener('keydown', event => {
-  if (event.target.closest('input,select,textarea')) return;
+  if (event.key === 'Escape' && $('preferences').open) { event.preventDefault(); $('preferences').open = false; $('preferences-toggle').focus(); return; }
+  if (event.target.closest('textarea,input:not([type="checkbox"])')) return;
   if (event.key === 'Escape' && notch) { dismissed = agent.turn_started_at; setOpen(false); }
   if (event.code === 'Space' && !event.target.closest('button,a') && canSwitch && ['needs_you', 'done'].includes(agent.status)) { event.preventDefault(); backToAgent().catch(() => {}); return; }
   if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) { event.preventDefault(); step(['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1); }
 });
+document.addEventListener('click', event => { if (!$('preferences').contains(event.target)) $('preferences').open = false; });
+document.addEventListener('focusin', event => { if (!$('preferences').contains(event.target)) $('preferences').open = false; });
 let touchStart;
 $('reader').addEventListener('touchstart', event => { touchStart = { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY }; }, { passive: true });
 $('reader').addEventListener('touchend', event => {

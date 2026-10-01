@@ -1,6 +1,6 @@
 {
   "name": "rosary-turn",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pray the Rosary while Claude works. Offline, daily mysteries, saved progress. Based on Quran Turn by Rizaldy.",
   "author": {
     "name": "Rizaldy (original Quran Turn)"
