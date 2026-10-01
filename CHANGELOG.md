@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.3] - 2026-10-02
+
+- Use Up/Down to scroll prayer text and Left/Right to navigate prayers.
+- Fill the native viewport so spare height enlarges the prayer pane instead of leaving a gap below the footer.
+
 ## [0.1.2] - 2026-10-02
 
 - Use a pure black dark background with neutral panels and text, retaining blue accents.

@@ -82,7 +82,7 @@ function render() {
   $('prev').textContent = id ? 'kembali' : 'previous';
   $('next').textContent = id ? 'lanjut' : 'next';
   $('choose').textContent = id ? '← peristiwa' : '← mysteries';
-  $('instructions').textContent = id ? 'gunakan tombol panah atau geser untuk navigasi' : 'use arrow keys or swipe to navigate';
+  $('instructions').textContent = id ? 'kiri/kanan: navigasi · atas/bawah: gulir' : 'left/right: navigate · up/down: scroll';
   $('completion').hidden = !state.isComplete();
   $('completion-text').textContent = id ? 'Rosario selesai. Tuhan memberkati Anda.' : 'Rosary complete. God bless you.';
   $('restart').textContent = id ? 'berdoa lagi' : 'pray again';
@@ -141,7 +141,11 @@ document.addEventListener('keydown', event => {
   if (event.target.closest('textarea,input:not([type="checkbox"])')) return;
   if (event.key === 'Escape' && notch) { dismissed = agent.turn_started_at; setOpen(false); }
   if (event.code === 'Space' && !event.target.closest('button,a') && canSwitch && ['needs_you', 'done'].includes(agent.status)) { event.preventDefault(); backToAgent().catch(() => {}); return; }
-  if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) { event.preventDefault(); step(['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1); }
+  if (['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); step(event.key === 'ArrowRight' ? 1 : -1); }
+  if (['ArrowUp', 'ArrowDown'].includes(event.key) && $('selection').hidden) {
+    event.preventDefault();
+    $('prayer-pane').scrollBy({ top: event.key === 'ArrowDown' ? 60 : -60, behavior: 'instant' });
+  }
 });
 document.addEventListener('click', event => { if (!$('preferences').contains(event.target)) $('preferences').open = false; });
 document.addEventListener('focusin', event => { if (!$('preferences').contains(event.target)) $('preferences').open = false; });

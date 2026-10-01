@@ -51,10 +51,12 @@ html { scrollbar-color: var(--muted) var(--bg); scrollbar-width: thin; }
 @media (max-width: 350px) { .rosary-header { gap: 6px; } .rosary-container { padding: 14px; } }
 @media (prefers-reduced-motion: reduce) { *, ::before, ::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 /* The native curtain has its own bounded viewport; the prayer pane takes the remaining height. */
-html[data-surface='notch'] #card { height: 420px; overflow: hidden; }
-html[data-surface='notch'] .agent-strip { padding: 5px 18px; font-size: 12px; }
-html[data-surface='notch'] .rosary-page { min-height: 0; height: 338px; }
-html[data-surface='notch'] .rosary-container { padding: 10px 18px; height: 100%; min-height: 0; flex: none; }
+html[data-surface='notch'] body { min-height: 0; height: 100dvh; overflow: hidden; }
+html[data-surface='notch'] #card { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+html[data-surface='notch'] .agent-strip { padding: 5px 18px; font-size: 12px; width: 100%; flex: none; }
+html[data-surface='notch'] .rosary-page { min-height: 0; flex: 1; }
+html[data-surface='notch'] .rosary-container { padding: 10px 18px; min-height: 0; }
+html[data-surface='notch'] .rosary-container > :not(.prayer-container) { flex-shrink: 0; }
 html[data-surface='notch'] .rosary-header { margin-bottom: 8px; }
 html[data-surface='notch'] .mystery-title { font-size: 19px; min-height: 0; margin-bottom: 8px; }
 html[data-surface='notch'] .prayer-label { font-size: 16px; margin-bottom: 8px; }
@@ -62,8 +64,8 @@ html[data-surface='notch'] .prayer-container { min-height: 54px; max-height: non
 html[data-surface='notch'] .prayer-container::before { margin-bottom: 8px; }
 html[data-surface='notch'] .prayer-text { font-size: 15px; }
 html[data-surface='notch'] .instructions { display: none; }
-html[data-surface='notch'] .credits { font-size: 10px; padding: 0 18px; }
-html[data-surface='notch'] .hero { min-height: 338px; }
+html[data-surface='notch'] .credits { font-size: 10px; padding: 0 18px 8px; flex: none; }
+html[data-surface='notch'] .hero { min-height: 0; flex: 1; }
 html[data-surface='notch'] .container { padding: 14px 18px; }
 html[data-surface='notch'] .site-title { font-size: 36px; }
 html[data-surface='notch'] .mysteries-grid { flex-direction: row; gap: 6px; margin-top: 12px; }

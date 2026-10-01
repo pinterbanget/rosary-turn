@@ -171,7 +171,7 @@ The language field uses panel background, a thin pale border, and the field radi
 
 ### Navigation
 
-Mystery selection wraps horizontally on desktop and stacks on mobile. Prayer navigation places previous and next at opposite ends below progress. Lowercase labels follow OpenRosary. Arrow keys and horizontal swipes complement visible buttons. Returning to selection or the reader moves focus to the appropriate control; restart focuses next prayer.
+Mystery selection wraps horizontally on desktop and stacks on mobile. Prayer navigation places previous and next at opposite ends below progress. Lowercase labels follow OpenRosary. Left/Right and horizontal swipes complement visible buttons; Up/Down scroll the prayer pane. Returning to selection or the reader moves focus to the appropriate control; restart focuses next prayer.
 
 ### Coding Session Strip
 
