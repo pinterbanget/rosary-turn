@@ -1,459 +1,167 @@
-// Quran Turn reader. Ayah strings only ever reach the page through textContent
-// and are never altered; the file is checked against its pinned SHA-256 first.
-import { SITE_URL, SUPPORT_URL, VERSION } from './config.js';
-import { QUICK_STARTS, arabicDigits, buildSearchIndex, resolveQuery } from './quran-core.js';
-import { FloatCard, canFloat } from './float.js';
-import { fillAyah as fillVerified, loadText } from './text.js';
+import { MYSTERIES, changeLanguage, sequence, suggestedMystery, calendarDay } from './rosary-core.js';
 
-const $ = (id) => document.getElementById(id);
-const meta = window.QuranData;
-const counts = meta.Sura.map((s) => s[1] ?? 0);
-const AGENT_NAMES = { claude: 'Claude', codex: 'Codex' };
-
-let quran = null;
-let pos = { surah: 1, ayah: 1 };
-let agent = { status: 'idle' };
-let canSwitch = false;
-let saving = Promise.resolve();
-let pendingSaves = 0;
-let doneTimer = null;
-let floating = false;
-let firstRun = false;
-
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+const $ = id => document.getElementById(id);
+const notch = location.pathname === '/notch.html';
+if (notch) { document.documentElement.dataset.surface = 'notch'; document.title = 'Rosary Turn notch'; }
+let position, agent = { status: 'idle' }, canSwitch = false;
+let saving = Promise.resolve(), pending = 0, dirty = false, lastStatus, lastTurn, open = false, hovered = false, dismissed, closeTimer;
+let snapshotVersion, hostBuild, connected = true;
+const native = window.webkit?.messageHandlers?.notch;
+const names = { claude: 'Claude', codex: 'Codex' };
+const idNames = { joyful: 'gembira', luminous: 'terang', sorrowful: 'sedih', glorious: 'mulia' };
+async function post(path, body) {
+  const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(5000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+function send(message) {
+  if (!notch) return;
+  if (native) native.postMessage(message);
+  else post('/api/surface', message).catch(() => {});
+}
+function setOpen(on, focus = false) {
+  clearTimeout(closeTimer);
+  if (on) {
+    send({ type: 'height', value: 420, chrome: Math.max(0, window.outerHeight - window.innerHeight) });
+    if (!open || focus) send({ type: 'open', focus });
+  } else if (open) send({ type: 'close' });
+  open = on;
+}
+window.__notch = event => {
+  if (event === 'hover-in') { hovered = true; setOpen(true); }
+  if (event === 'hover-out') { hovered = false; if (agent.status === 'done' || agent.status === 'idle') closeTimer = setTimeout(() => setOpen(false), 700); }
+  if (event === 'click') setOpen(true, true);
 };
-
-// ── Text ────────────────────────────────────────────────────────────────────
-
-// Writes one ayah into `el` (main reader or float card) through textContent only,
-// then checks the element reads back exactly the source string (see text.js).
-const fillAyah = (el, surah, ayah) => fillVerified(el, quran, surah, ayah);
-
-function renderAyah() {
-  const { surah, ayah } = pos;
-  try {
-    fillAyah($('ayah-text'), surah, ayah);
-  } catch (err) {
-    return fail(err);
-  }
-  $('ayah-end').textContent = '\u06DD' + arabicDigits(ayah);
-  $('surah-ar').textContent = meta.Sura[surah][4];
-  $('surah-ref').textContent = `${meta.Sura[surah][5].toUpperCase()} · ${surah}:${ayah}`;
-  document.title = `${surah}:${ayah} · Quran Turn`;
-  $('stage').scrollTop = 0;
-  renderFloat();
+document.documentElement.addEventListener('mouseenter', () => { hovered = true; clearTimeout(closeTimer); });
+document.documentElement.addEventListener('mouseleave', () => { hovered = false; if (notch && ['done', 'idle'].includes(agent.status)) closeTimer = setTimeout(() => setOpen(false), 700); });
+function statusText() {
+  if (!connected) return 'session disconnected · reconnecting…';
+  const name = names[agent.agent] || 'Agent';
+  const minutes = Math.max(0, Math.floor((Date.now() - Date.parse(agent.turn_started_at)) / 60000));
+  if (agent.status === 'working') return `${name} is working · ${minutes < 1 ? '<1 min' : `${minutes} min`}`;
+  if (agent.status === 'needs_you') return `${name} needs you · your prayer is saved`;
+  if (agent.status === 'done') return `${name} finished · saved at ${agent.last_turn?.to || position?.mystery}`;
+  return 'ready for your next coding session';
 }
-
-function fail(err) {
-  quran = null;
-  $('ayah-text').replaceChildren();
-  $('ayah-end').textContent = '';
-  $('error').textContent = err.message;
-  $('error').hidden = false;
-  $('verified').hidden = true;
-  for (const id of ['next', 'prev', 'open-jump']) $(id).disabled = true;
-}
-
-// ── Agent status ────────────────────────────────────────────────────────────
-
 function renderStatus() {
-  const name = AGENT_NAMES[agent.agent] || 'Agent';
-  const status = agent.status || 'idle';
-  const el = $('status');
-  el.dataset.status = status;
-  $('status-text').textContent =
-    status === 'working' ? `${name} is working` : status === 'needs_you' ? 'Paused' : 'Idle';
-
-  const banner = $('banner');
-  const back = $('back-btn');
-  back.textContent = `Back to ${name}`;
-  back.title = 'Space';
-  back.setAttribute('aria-keyshortcuts', 'Space');
-  back.hidden = !canSwitch;
-  // Only advertise Space when it really goes back (see agentWaiting).
-  $('back-hint').hidden = !(canSwitch && (status === 'needs_you' || (status === 'done' && isCompact())));
-  clearTimeout(doneTimer);
-  if (status === 'needs_you') {
-    banner.dataset.kind = 'needs_you';
-    $('banner-title').textContent = `${name} needs you`;
-    $('banner-meta').textContent = canSwitch ? 'permission requested · reading paused' : 'permission requested · go back to your terminal';
-    banner.hidden = false;
-  } else if (status === 'done' && agent.last_turn && !banner.dataset.dismissed) {
-    const t = agent.last_turn;
-    banner.dataset.kind = 'done';
-    $('banner-title').textContent = `Saved at ${t.to}`;
-    $('banner-meta').textContent = `turn finished · ${t.from} → ${t.to} · ${t.ayat} ${t.ayat === 1 ? 'ayah' : 'ayat'}`;
-    banner.hidden = false;
-    doneTimer = setTimeout(() => { banner.hidden = true; banner.dataset.dismissed = '1'; }, 60_000);
-  } else {
-    banner.hidden = true;
-    banner.dataset.kind = 'idle';
-    $('banner-title').textContent = floating ? 'Reading in the floating card' : `Saved at ${pos.surah}:${pos.ayah}`;
-    $('banner-meta').textContent = floating ? 'close the card to come back here' : 'reading continues on your next prompt';
-  }
-  if (status === 'working') delete banner.dataset.dismissed;
-
-  const n = agent.ayat || 0;
-  const ayat = `${n} ${n === 1 ? 'ayah' : 'ayat'}`;
-  $('counter').textContent =
-    status === 'working' ? `${ayat} this turn`
-    : status === 'needs_you' ? `${ayat} · paused`
-    : agent.last_turn ? `Last turn: ${agent.last_turn.from} → ${agent.last_turn.to}`
-    : 'Go to · g';
-  renderFloat();
-}
-
-// ── Float mode ──────────────────────────────────────────────────────────────
-
-const card = new FloatCard({
-  onKey: (ev) => floatKey(ev),
-  onBack: () => backToAgent(),
-  onClose: () => setFloating(false),
-});
-
-function renderFloat() {
-  if (!card.open || !quran) return;
-  const name = AGENT_NAMES[agent.agent] || 'Agent';
-  const status = agent.status || 'idle';
-  const n = agent.ayat || 0;
-  const t = agent.last_turn;
-  try {
-    card.render({
-      fill: (el) => fillAyah(el, pos.surah, pos.ayah),
-      surah: pos.surah,
-      ayah: pos.ayah,
-      end: '\u06DD' + arabicDigits(pos.ayah),
-      ref: `${meta.Sura[pos.surah][5].toUpperCase()} · ${pos.surah}:${pos.ayah}`,
-      status,
-      statusText: status === 'working' ? `${name} is working` : status === 'needs_you' ? 'Paused' : 'Idle',
-      name,
-      canSwitch,
-      counter: status === 'working' || status === 'needs_you' ? `${n} ${n === 1 ? 'ayah' : 'ayat'} this turn` : `${pos.surah}:${pos.ayah}`,
-      doneId: t?.ended_at || null,
-      doneTitle: t ? `Saved at ${t.to} · ${t.ayat} ${t.ayat === 1 ? 'ayah' : 'ayat'}` : '',
-    });
-  } catch (err) {
-    card.close();
-    fail(err);
+  $('agent-status').textContent = statusText();
+  document.querySelector('.agent-strip').dataset.status = agent.status;
+  $('back-agent').hidden = !canSwitch;
+  $('back-agent').textContent = `back to ${names[agent.agent] || 'agent'}`;
+  $('dismiss').hidden = !notch;
+  if (!notch) return;
+  send({ type: 'status', value: agent.status });
+  const turn = agent.turn_started_at || agent.last_turn?.ended_at;
+  if (lastStatus !== agent.status || lastTurn !== turn) {
+    if (['working', 'needs_you'].includes(agent.status) && dismissed !== agent.turn_started_at) setOpen(true);
+    else if (agent.status === 'done' && !hovered) closeTimer = setTimeout(() => setOpen(false), 1800);
+    lastStatus = agent.status; lastTurn = turn;
   }
 }
-
-function floatKey(ev) {
-  const k = ev.key;
-  if (k === 'ArrowLeft' || k === 'j' || k === ' ') { ev.preventDefault(); step(1); }
-  else if (k === 'ArrowRight' || k === 'k') { ev.preventDefault(); step(-1); }
-  else if (k === 'g') { ev.preventDefault(); card.close().then(() => openJump()); }
-}
-
-function setFloating(on) {
-  floating = on;
-  store.set('quran-turn:float', on ? '1' : '0');
-  fetch('/api/float', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ on }) }).catch(() => {});
-  renderStatus();
-}
-
-async function startFloat() {
-  if (!quran || !canFloat()) return;
-  try {
-    await card.show();
-  } catch (err) {
-    console.warn('quran-turn: could not open the float card:', err?.name, err?.message);
-    return; // no user gesture, or the browser refused
-  }
-  setFloating(true);
-}
-
-// ── Position ────────────────────────────────────────────────────────────────
-
-function go(next) {
-  if (!quran) return;
-  pos = { surah: next.surah, ayah: next.ayah };
-  renderAyah();
-  store.set('quran-turn:position', JSON.stringify(pos));
-  pendingSaves++;
-  // Serialize saves so the server sees moves in order (it counts "next ayah" steps).
-  const body = JSON.stringify(pos);
-  saving = saving
-    .then(() => fetch('/api/position', { method: 'POST', headers: { 'content-type': 'application/json' }, body }))
-    .then((r) => (r.ok ? r.json() : null))
-    .then((snap) => { if (snap) { agent = snap.agent; canSwitch = Boolean(snap.canSwitch); renderStatus(); } })
-    .catch(() => {})
-    .finally(() => { pendingSaves--; });
-}
-
-function step(delta) {
-  let { surah, ayah } = pos;
-  ayah += delta;
-  if (ayah > counts[surah]) { surah = (surah % 114) + 1; ayah = 1; }
-  else if (ayah < 1) { surah = surah === 1 ? 114 : surah - 1; ayah = counts[surah]; }
-  go({ surah, ayah });
-}
-
-function valid(p) {
-  return p && Number.isInteger(p.surah) && p.surah >= 1 && p.surah <= 114 &&
-    Number.isInteger(p.ayah) && p.ayah >= 1 && p.ayah <= counts[p.surah];
-}
-
-// ── Go to / start from ──────────────────────────────────────────────────────
-// One search box: "kahfi", "36", "juz 30", "2:255", "hal 50", or Arabic words.
-// Matching uses normalized keys (quran-core.js); every ayah shown here is the
-// verbatim text, written through fillAyah() like everywhere else.
-
-let searchIndex = null; // built on the first Arabic search (~50 ms)
-let browseMode = 'surah';
-
-const tag = (name, props = {}, ...children) => {
-  const n = Object.assign(document.createElement(name), props);
-  n.append(...children);
-  return n;
-};
-const surahName = (s) => meta.Sura[s][5];
-
-function resultRow(r) {
-  const [, ayas, , , ar, tr, en] = meta.Sura[r.surah];
-  const b = tag('button', { type: 'button', className: 'result' });
-  b.dataset.kind = r.kind;
-  let num, title, sub;
-  if (r.kind === 'juz') {
-    num = `J${r.n}`; title = `Juz ${r.n}`; sub = `starts ${tr} ${r.surah}:${r.ayah}`;
-  } else if (r.kind === 'page') {
-    num = `p${r.n}`; title = `Page ${r.n}`; sub = `starts ${tr} ${r.surah}:${r.ayah}`;
-  } else if (r.kind === 'ayah') {
-    num = `${r.surah}:${r.ayah}`; title = tr; sub = en;
-  } else {
-    num = String(r.surah); title = tr; sub = `${en} · ${ayas} ayat`;
-  }
-  const names = tag('span', { className: 'surah-names' },
-    tag('span', { className: 'surah-tr', textContent: title }),
-    tag('span', { className: 'surah-en', textContent: sub }));
-  if (r.kind === 'ayah') {
-    const text = tag('span', { className: 'result-ayah', lang: 'ar', dir: 'rtl' });
-    fillAyah(text, r.surah, r.ayah); // verbatim, verified
-    names.append(text);
-  }
-  const arEl = tag('span', { className: 'surah-ar', lang: 'ar', dir: 'rtl', textContent: ar });
-  b.append(tag('span', { className: 'surah-num', textContent: num }), names, arEl);
-  b.setAttribute('aria-current', String(r.kind === 'surah' && r.surah === pos.surah));
-  b.addEventListener('click', () => { closeJump(); go({ surah: r.surah, ayah: r.ayah }); });
-  return tag('li', {}, b);
-}
-
-function renderResults() {
-  const q = $('jump-q').value.trim();
-  $('browse').hidden = Boolean(q);
-  $('quick').hidden = Boolean(q);
-  let items;
-  if (!q) {
-    items = browseMode === 'juz'
-      ? Array.from({ length: 30 }, (_, i) => ({ kind: 'juz', n: i + 1, surah: meta.Juz[i + 1][0], ayah: meta.Juz[i + 1][1] }))
-      : Array.from({ length: 114 }, (_, i) => ({ kind: 'surah', surah: i + 1, ayah: 1 }));
-  } else {
-    if (!searchIndex && /[\u0600-\u06FF]/.test(q)) searchIndex = buildSearchIndex(quran.bySurah);
-    items = resolveQuery(q, meta, quran.bySurah, searchIndex);
-  }
-  $('jump-results').replaceChildren(...items.map(resultRow));
-  if (!items.length) {
-    $('jump-results').append(tag('li', { className: 'no-results', textContent: 'Nothing found. Try “kahfi”, “juz 30”, “2:255”, “hal 50” or a few Arabic words.' }));
-  }
-  const ayat = items.filter((r) => r.kind === 'ayah').length;
-  $('jump-count').textContent = !q ? '114 surahs · 30 juz'
-    : ayat >= 50 ? 'first 50 · add words to narrow' : `${items.length} result${items.length === 1 ? '' : 's'}`;
-}
-
-function buildQuickStarts(firstRun) {
-  const chips = [];
-  if (!firstRun) chips.push({ label: `Continue ${pos.surah}:${pos.ayah}`, pick: () => closeJump() });
-  for (const qs of QUICK_STARTS) {
-    const [r] = resolveQuery(qs.query, meta, quran.bySurah);
-    if (r) chips.push({ label: qs.label, pick: () => { closeJump(); go({ surah: r.surah, ayah: r.ayah }); } });
-  }
-  $('quick').replaceChildren(...chips.map((c) => {
-    const b = tag('button', { type: 'button', className: 'chip', textContent: c.label });
-    b.addEventListener('click', c.pick);
-    return b;
+function render() {
+  if (!position) return;
+  const state = sequence(position), id = position.language === 'id';
+  document.documentElement.lang = position.language;
+  $('language').value = position.language;
+  $('latin').checked = position.prayerLanguage === 'la';
+  $('mystery-title').textContent = state.getCurrentMysteryTitle() || (id ? 'Peristiwa ' : '') + state.getMysteryType() + (id ? '' : ' Mysteries');
+  $('prayer-label').textContent = state.getCurrentPrayerLabel();
+  $('prayer-text').textContent = state.getCurrentPrayerText();
+  $('prayer-text').lang = state.getCurrentPrayerLabel().startsWith(id ? 'Peristiwa #' : 'Mystery #') ? position.language : position.prayerLanguage;
+  $('progress-fill').style.transform = `scaleX(${position.step / state.getMaxCount()})`;
+  $('progress-text').textContent = `${position.step}/${state.getMaxCount()}`;
+  $('progress').setAttribute('aria-valuemax', state.getMaxCount());
+  $('progress').setAttribute('aria-valuenow', position.step);
+  $('prev').disabled = position.step === 0;
+  $('next').disabled = state.isComplete();
+  $('prev').textContent = id ? 'sebelumnya' : 'previous';
+  $('next').textContent = id ? 'doa berikutnya' : 'next prayer';
+  $('choose').textContent = id ? '← peristiwa' : '← mysteries';
+  $('instructions').textContent = id ? 'gunakan tombol panah atau geser untuk navigasi' : 'use arrow keys or swipe to navigate';
+  $('completion').hidden = !state.isComplete();
+  $('completion-text').textContent = id ? 'Rosario selesai. Tuhan memberkati Anda.' : 'Rosary complete. God bless you.';
+  $('restart').textContent = id ? 'berdoa lagi' : 'pray again';
+  $('resume').textContent = id ? 'lanjutkan doa' : 'resume prayer';
+  $('tagline').textContent = id ? 'alat doa rosario sederhana berbasis web.' : 'a simple web-based rosary tool.';
+  $('theme').textContent = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  const today = suggestedMystery(calendarDay());
+  $('suggestion').replaceChildren(document.createTextNode(id ? 'saran hari ini: ' : "today's suggestion: "));
+  const accent = document.createElement('span'); accent.className = 'accent'; accent.textContent = id ? idNames[today] : today; $('suggestion').append(accent);
+  $('mysteries').replaceChildren(...MYSTERIES.map(mystery => {
+    const button = document.createElement('button'); button.className = `mystery-btn${today === mystery ? ' suggested' : ''}`;
+    button.textContent = id ? idNames[mystery] : mystery;
+    button.addEventListener('click', () => { go({ ...position, mystery, step: 0 }); showReader(); });
+    return button;
   }));
-}
-
-function setBrowse(mode) {
-  browseMode = mode;
-  for (const t of $('browse').querySelectorAll('[data-browse]')) t.setAttribute('aria-selected', String(t.dataset.browse === mode));
-  renderResults();
-}
-
-function openJump({ firstRun = false } = {}) {
-  if (!quran) return;
-  $('jump').hidden = false;
-  $('jump-title').textContent = firstRun ? 'WHERE WOULD YOU LIKE TO START?' : 'GO TO';
-  $('jump-q').value = '';
-  buildQuickStarts(firstRun);
-  setBrowse('surah');
-  $('jump-q').focus();
-  $('jump-results').querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'center' });
-}
-
-function closeJump() {
-  $('jump').hidden = true;
-  $('open-jump').focus();
-}
-
-// Enter opens the first result; ↓/↑ move through results.
-function onJumpKey(e) {
-  const buttons = [...$('jump-results').querySelectorAll('button.result')];
-  const i = buttons.indexOf(document.activeElement);
-  if (e.key === 'Enter' && e.target === $('jump-q')) {
-    e.preventDefault();
-    buttons[0]?.click();
-  } else if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    (buttons[i + 1] || buttons[0])?.focus();
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    (i <= 0 ? $('jump-q') : buttons[i - 1]).focus();
-  }
-}
-
-// ── Preferences ─────────────────────────────────────────────────────────────
-
-function setSize(px) {
-  const size = Math.min(48, Math.max(20, px));
-  document.documentElement.style.setProperty('--ayah-size', `${size}px`);
-  store.set('quran-turn:size', String(size));
-}
-const currentSize = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ayah-size'), 10) || 30;
-
-function toggleTheme() {
-  const dark = document.documentElement.dataset.theme
-    ? document.documentElement.dataset.theme === 'dark'
-    : matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
-  store.set('quran-turn:theme', document.documentElement.dataset.theme);
-}
-
-// ── Wiring ──────────────────────────────────────────────────────────────────
-
-function backToAgent() {
-  fetch('/api/back-to-agent', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => {});
-}
-
-// The window is collapsed to the small strip (see the compact media query).
-const isCompact = () => window.innerHeight < 180;
-// Space/Enter jumps back to the agent while it waits on you, or from the strip
-// after a turn. Once you "Open" the reader again after a turn, Space reads on.
-const agentWaiting = () => canSwitch && (agent.status === 'needs_you' || (agent.status === 'done' && isCompact()));
-
-function onKey(e) {
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (!$('jump').hidden) {
-    if (e.key === 'Escape') closeJump();
-    return;
-  }
-  const k = e.key;
-  if ((k === ' ' || k === 'Enter') && agentWaiting() && !e.target.closest?.('button, a, input')) {
-    e.preventDefault();
-    return backToAgent();
-  }
-  // In the strip the ayah isn't visible, so don't move it.
-  if (isCompact()) return;
-  // Arabic reads right-to-left, so ← moves forward.
-  if (k === 'ArrowLeft' || k === 'j' || k === ' ') { e.preventDefault(); step(1); }
-  else if (k === 'ArrowRight' || k === 'k') { e.preventDefault(); step(-1); }
-  else if (k === 'g') { e.preventDefault(); openJump(); }
-  else if (k === '+' || k === '=') setSize(currentSize() + 2);
-  else if (k === '-') setSize(currentSize() - 2);
-  else if (k === 'd') toggleTheme();
-  else if (k === 'f') { e.preventDefault(); startFloat(); }
-}
-
-// After a plugin update the server comes back as the new version; reload once
-// so the page runs the matching code too.
-function reloadIfUpdated(snap) {
-  if (!snap.version || snap.version === VERSION) return false;
-  const key = `quran-turn:reloaded-for:${snap.version}`;
-  try {
-    if (sessionStorage.getItem(key)) return false; // never loop
-    sessionStorage.setItem(key, '1');
-  } catch {}
-  location.reload();
-  return true;
-}
-
-function applySnapshot(snap) {
-  if (reloadIfUpdated(snap)) return;
-  agent = snap.agent || agent;
-  canSwitch = Boolean(snap.canSwitch);
   renderStatus();
-  // Adopt a position changed elsewhere (another window, the CLI) when we're not mid-save.
-  const p = snap.position;
-  if (quran && pendingSaves === 0 && valid(p) && (p.surah !== pos.surah || p.ayah !== pos.ayah)) {
-    pos = { surah: p.surah, ayah: p.ayah };
-    renderAyah();
-  }
 }
-
-async function init() {
-  const theme = store.get('quran-turn:theme');
-  if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
-  const size = Number(store.get('quran-turn:size'));
-  if (size) setSize(size);
-
-  $('support').href = SUPPORT_URL;
-  $('site-note').href = `${SITE_URL}/?v=${VERSION}#update`;
-  $('version').textContent = ` · v${VERSION}`;
-  $('next').addEventListener('click', () => step(1));
-  $('prev').addEventListener('click', () => step(-1));
-  $('open-jump').addEventListener('click', openJump);
-  $('expand-btn').addEventListener('click', () => {
-    fetch('/api/expand', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => {});
-  });
-  $('back-btn').addEventListener('click', backToAgent);
-  if (canFloat()) {
-    $('float-btn').hidden = false;
-    $('float-btn').addEventListener('click', startFloat);
-    // Floated last time: a gentle nudge, since opening a float needs a click or key.
-    if (store.get('quran-turn:float') === '1') $('float-btn').classList.add('nudge');
-  }
-  $('close-jump').addEventListener('click', closeJump);
-  $('jump-q').addEventListener('input', renderResults);
-  $('jump-form').addEventListener('submit', (e) => e.preventDefault());
-  $('jump').addEventListener('keydown', onJumpKey);
-  for (const t of $('browse').querySelectorAll('[data-browse]')) t.addEventListener('click', () => setBrowse(t.dataset.browse));
-  document.addEventListener('keydown', onKey);
-  window.addEventListener('resize', () => renderStatus());
-
-  try {
-    quran = await loadText();
-    $('verified').hidden = false;
-  } catch (err) {
-    return fail(err);
-  }
-
-  try {
-    const snap = await (await fetch('/api/state', { cache: 'no-store' })).json();
-    if (valid(snap.position)) pos = { surah: snap.position.surah, ayah: snap.position.ayah };
-    firstRun = !snap.position?.updated_at && !store.get('quran-turn:position');
+function showError(message) { $('error-text').textContent = message; $('save-error').hidden = false; }
+function save(next) {
+  dirty = true; pending++;
+  saving = saving.catch(() => {}).then(() => post('/api/position', next)).then(snap => {
     agent = snap.agent;
-    canSwitch = Boolean(snap.canSwitch);
-  } catch {
-    try {
-      const saved = JSON.parse(store.get('quran-turn:position'));
-      if (valid(saved)) pos = saved;
-    } catch {}
-  }
-  renderAyah();
-  renderStatus();
-  // First time ever (no saved place yet): ask where to start instead of assuming 1:1.
-  if (firstRun && !isCompact()) openJump({ firstRun: true });
-
-  const events = new EventSource('/api/events');
-  events.onmessage = (e) => { try { applySnapshot(JSON.parse(e.data)); } catch {} };
+    if (pending === 1) { position = snap.position; dirty = false; $('save-error').hidden = true; render(); }
+    renderStatus();
+  }).catch(() => { showError('Your place could not be saved. Keep this window open and retry.'); }).finally(() => { pending--; });
 }
-
-// Exposed for the end-to-end rendering check (tests walk every ayah).
-window.__quranTurn = {
-  get quran() { return quran; },
-  show(surah, ayah) { pos = { surah, ayah }; renderAyah(); return $('ayah-text').textContent; },
-};
-
-init();
+function go(next) { position = { ...next, revision: (position?.revision || 0) + 1 }; render(); $('prayer-pane').scrollTop = 0; save({ ...position }); }
+function step(delta) {
+  if (!position || !$('selection').hidden) return;
+  const max = sequence(position).getMaxCount();
+  const next = Math.max(0, Math.min(max, position.step + delta));
+  if (next === position.step) return;
+  go({ ...position, step: next });
+  if (navigator.vibrate) navigator.vibrate(delta < 0 ? [30, 50, 30] : 30);
+}
+function showReader() { $('selection').hidden = true; $('reader').hidden = false; $('choose').focus(); }
+$('prev').addEventListener('click', () => step(-1));
+$('next').addEventListener('click', () => step(1));
+$('restart').addEventListener('click', () => { go({ ...position, step: 0 }); $('next').focus(); });
+$('choose').addEventListener('click', () => { $('reader').hidden = true; $('selection').hidden = false; $('mysteries').firstElementChild?.focus(); });
+$('resume').addEventListener('click', showReader);
+$('language').addEventListener('change', event => { if (position) go(changeLanguage(position, event.target.value)); });
+$('latin').addEventListener('change', event => { if (position) go({ ...position, prayerLanguage: event.target.checked ? 'la' : position.language }); });
+$('retry').addEventListener('click', () => { if (position) save({ ...position }); else location.reload(); });
+$('theme').addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  const apply = () => { document.documentElement.dataset.theme = next; render(); };
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(apply); else apply();
+  try { localStorage.setItem('openrosary-theme', next); } catch {}
+});
+async function backToAgent() { await saving; await post('/api/back-to-agent', {}); setOpen(false); }
+$('back-agent').addEventListener('click', () => backToAgent().catch(() => showError('Could not switch apps. Return to your agent manually.')));
+$('dismiss').addEventListener('click', () => { dismissed = agent.turn_started_at; setOpen(false); });
+document.addEventListener('keydown', event => {
+  if (event.target.closest('input,select,textarea')) return;
+  if (event.key === 'Escape' && notch) { dismissed = agent.turn_started_at; setOpen(false); }
+  if (event.code === 'Space' && !event.target.closest('button,a') && canSwitch && ['needs_you', 'done'].includes(agent.status)) { event.preventDefault(); backToAgent().catch(() => {}); return; }
+  if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) { event.preventDefault(); step(['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1); }
+});
+let touchStart;
+$('reader').addEventListener('touchstart', event => { touchStart = { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY }; }, { passive: true });
+$('reader').addEventListener('touchend', event => {
+  if (!touchStart) return;
+  const dx = touchStart.x - event.changedTouches[0].clientX, dy = touchStart.y - event.changedTouches[0].clientY;
+  touchStart = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) step(dx > 0 ? 1 : -1);
+}, { passive: true });
+function accept(snap) {
+  if (snapshotVersion && snap.version !== snapshotVersion && !pending && !dirty) location.reload();
+  if (notch && hostBuild && snap.notchBuild !== hostBuild) { send({ type: 'quit' }); post('/api/surface/relaunch', {}).catch(() => {}); }
+  snapshotVersion = snap.version; hostBuild = snap.notchBuild;
+  agent = snap.agent; canSwitch = snap.canSwitch;
+  if (!pending && !dirty && (!position || (snap.position.revision || 0) >= (position.revision || 0))) { const changed = !position || position.step !== snap.position.step || position.mystery !== snap.position.mystery; position = snap.position; render(); if (changed) $('prayer-pane').scrollTop = 0; }
+  else renderStatus();
+}
+try {
+  const initial = await fetch('/api/state');
+  if (!initial.ok) throw new Error('state unavailable');
+  accept(await initial.json());
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  await post('/api/config', { timeZone });
+  const events = new EventSource(`/api/events${notch ? '?surface=notch' : ''}`);
+  events.onmessage = event => { try { connected = true; accept(JSON.parse(event.data)); } catch { showError('Could not load your prayer. Reload this window.'); } };
+  events.onerror = () => { connected = false; renderStatus(); };
+} catch { showError('Could not connect to Rosary Turn. Start the local server and retry.'); }
+setInterval(renderStatus, 15000);
+window.addEventListener('beforeunload', event => { if (dirty || pending) { event.preventDefault(); event.returnValue = ''; } });

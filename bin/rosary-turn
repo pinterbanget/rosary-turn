@@ -1,0 +1,140 @@
+#!/usr/bin/env node
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { MYSTERIES, reference } from '../app/rosary-core.js';
+import { VERSION, compareVersions } from '../src/rosary.mjs';
+import { buildMacHost, notchSupported } from '../src/notch.mjs';
+import { DEFAULT_PORT, startServer } from '../src/server.mjs';
+import { applyHook, ensureDailyPosition, home, logError, readJson, readSessions, setPosition, writeJson } from '../src/state.mjs';
+
+const [cmd, ...rest] = process.argv.slice(2);
+const flag = name => { const i = rest.indexOf(`--${name}`); return i >= 0 ? rest[i + 1] : undefined; };
+const port = Number(flag('port')) || DEFAULT_PORT;
+const base = `http://127.0.0.1:${port}`;
+async function call(path, body, timeout = 1200) {
+  const res = await fetch(base + path, {
+    method: body ? 'POST' : 'GET', headers: body ? { 'content-type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(timeout),
+  });
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+  return res.json();
+}
+async function ensureServer() {
+  let health;
+  try { health = await call('/api/health'); } catch {}
+  if (health && health.app !== 'rosary-turn') throw new Error(`Port ${port} is used by another app. Set ROSARY_TURN_PORT to a free port.`);
+  if (health && compareVersions(health.version, VERSION) >= 0) return true;
+  if (health) {
+    await call('/api/shutdown', {});
+    for (let i = 0; i < 20; i++) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      try { await call('/api/health', null, 200); } catch { break; }
+    }
+  }
+  if (process.env.ROSARY_TURN_NO_SERVER) return false;
+  const child = spawn(process.execPath, [fileURLToPath(import.meta.url), 'serve', '--port', String(port)], { detached: true, stdio: 'ignore', windowsHide: true });
+  child.on('error', logError);
+  child.unref();
+  for (let i = 0; i < 20; i++) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    try { if ((await call('/api/health', null, 300)).app === 'rosary-turn') return true; } catch {}
+  }
+  return false;
+}
+function readStdin() {
+  if (process.stdin.isTTY) return Promise.resolve({});
+  return new Promise(resolve => {
+    let raw = '', finished = false;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      process.stdin.pause();
+      try { resolve(raw.trim() ? JSON.parse(raw) : {}); } catch { resolve({}); }
+    };
+    const timer = setTimeout(done, 300);
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => { raw += chunk; if (raw.length > 65536) done(); });
+    process.stdin.on('end', done);
+    process.stdin.on('error', done);
+  });
+}
+async function hook(event) {
+  if (!['start', 'needs-you', 'resume', 'stop'].includes(event)) return;
+  if (!readJson('config.json').enabled) return;
+  const status = readJson('agent.json').status;
+  if (event === 'resume' && status !== 'needs_you') return;
+  if (event === 'needs-you' && status !== 'working') return;
+  if (event === 'stop' && !['working', 'needs_you'].includes(status)) return;
+  const payload = await readStdin();
+  const body = { event, agent: flag('agent') || (process.env.PLUGIN_ROOT ? 'codex' : 'claude'), host: process.env.__CFBundleIdentifier || null, session_id: payload.session_id ?? null };
+  if (event === 'start') await ensureServer();
+  try { await call('/api/hook', body); } catch { applyHook(event, body); }
+}
+const HELP = `Rosary Turn: pray while your coding agent works.
+
+  rosary-turn open                  open the reader
+  rosary-turn today                 reset to today's suggested mystery
+  rosary-turn start <mystery>        joyful | luminous | sorrowful | glorious
+  rosary-turn where | status        saved prayer and agent status
+  rosary-turn log [n]               recent coding turns
+  rosary-turn on | off              enable or pause hooks
+  rosary-turn surface <s>           auto | notch | window
+  rosary-turn switch on|off         automatic window switching (macOS)
+  rosary-turn serve                 local reader server
+  rosary-turn hook <event>          start | needs-you | resume | stop
+
+State: ${home()}. Original session engine by Rizaldy (Quran Turn).`;
+try {
+  switch (cmd) {
+    case 'hook': await hook(rest[0]); break;
+    case 'serve': console.error(`Rosary Turn reader at ${(await startServer({ port })).url}`); break;
+    case 'open':
+      if (!(await ensureServer())) throw new Error('could not start the reader server');
+      await call('/api/open', {});
+      console.log(`Reader: ${base}/`);
+      break;
+    case 'today':
+    case 'start': {
+      const prev = ensureDailyPosition();
+      let mystery = rest[0];
+      if (cmd === 'today') {
+        const { suggestedMystery, calendarDay } = await import('../app/rosary-core.js');
+        mystery = suggestedMystery(calendarDay(new Date(), readJson('config.json').timeZone));
+      }
+      if (!MYSTERIES.includes(mystery)) throw new Error('choose joyful, luminous, sorrowful, or glorious');
+      const position = { ...prev, mystery, step: 0 };
+      try { await call('/api/position', position); } catch { setPosition(position); }
+      console.log(`Starting ${mystery} mysteries.`);
+      break;
+    }
+    case 'where': console.log(reference(ensureDailyPosition())); break;
+    case 'status': console.log(`Rosary Turn · ${reference(ensureDailyPosition())} · ${readJson('agent.json').status}`); break;
+    case 'log': {
+      const turns = readSessions().slice(-(Number(rest[0]) || 10));
+      if (!turns.length) console.log('No turns yet.');
+      for (const t of turns) console.log(`${t.started_at}  ${t.from} → ${t.to}  ${t.prayers} prayer steps  ${t.agent}${t.interrupted ? ' (interrupted)' : ''}`);
+      break;
+    }
+    case 'on':
+    case 'off': writeJson('config.json', { ...readJson('config.json'), enabled: cmd === 'on' }); console.log(`Hooks ${cmd === 'on' ? 'enabled' : 'paused'}.`); break;
+    case 'switch': writeJson('config.json', { ...readJson('config.json'), autoSwitch: rest[0] !== 'off' }); break;
+    case 'surface': {
+      const surface = rest[0];
+      if (!['auto', 'notch', 'window'].includes(surface)) { console.log(`Surface: ${readJson('config.json').surface}`); break; }
+      if (surface === 'notch' && !notchSupported({ explicit: true })) throw new Error('Notch requires macOS 12+ with Swift, or Windows with Edge.');
+      if (process.platform === 'darwin' && surface !== 'window' && notchSupported()) await buildMacHost();
+      writeJson('config.json', { ...readJson('config.json'), surface });
+      if (await ensureServer()) { await call('/api/refresh', {}); if (surface !== 'window') await call('/api/surface/relaunch', {}); }
+      console.log(`Surface: ${surface}`);
+      break;
+    }
+    default: console.log(HELP);
+  }
+} catch (error) {
+  if (cmd === 'hook') logError(error);
+  else {
+    console.error(`rosary-turn: ${error.message}`);
+    process.exitCode = 1;
+  }
+}

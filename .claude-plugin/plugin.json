@@ -1,18 +1,16 @@
 {
-  "name": "quran-turn",
-  "version": "0.7.5",
-  "description": "Read the Qur'an while Claude takes its turn. On macOS the reader comes out of the notch when you send a prompt, turns yellow when Claude needs you, and saves your exact ayah when the turn ends. Offline, no account, no tracking.",
+  "name": "rosary-turn",
+  "version": "0.1.0",
+  "description": "Pray the Rosary while Claude works. Offline, daily mysteries, saved progress. Based on Quran Turn by Rizaldy.",
   "author": {
-    "name": "Rizaldy"
+    "name": "Rizaldy (original Quran Turn)"
   },
-  "homepage": "https://quran.allrize.tech",
-  "repository": "https://github.com/rzrizaldy/quran-turn",
+  "repository": "https://github.com/pinterbanget/rosary-turn",
   "license": "MIT",
   "keywords": [
-    "quran",
-    "reading",
+    "rosary",
+    "prayer",
     "hooks",
-    "offline",
-    "focus"
+    "offline"
   ]
 }

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Quran Turn notch</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="notch.css">
+<script src="/data/quran-data.js"></script>
+<script type="module" src="notch.js"></script>
+</head>
+<body>
+<main class="n-card" id="card" data-status="idle">
+  <!-- Level with the notch: who's working on the left, where you are on the right. -->
+  <header class="n-top" id="top">
+    <span class="n-status" id="status" title=""><i class="n-dot" aria-hidden="true"></i><span id="status-text">Quran Turn</span><span class="n-time" id="status-time"></span></span>
+    <span class="n-gap" aria-hidden="true"></span>
+    <span class="n-ref" id="ref"></span>
+  </header>
+
+  <div class="n-alert" id="alert" role="status">
+    <div class="n-alert-inner">
+      <span class="n-alert-title" id="alert-title"></span>
+      <span class="n-alert-actions"><button type="button" class="n-back" id="back">Back to Claude</button><kbd class="n-key" id="back-key">space</kbd></span>
+    </div>
+  </div>
+
+  <!-- First run: choose where to start, right here in the notch. -->
+  <div class="n-start" id="start" hidden>
+    <span class="n-start-title">Where would you like to start?</span>
+    <div class="n-chips" id="chips"></div>
+  </div>
+
+  <!-- A fixed height (a fifth of the screen); a long ayah scrolls in here. -->
+  <div class="n-stage-wrap" id="stage-wrap">
+    <section class="n-stage" id="stage" tabindex="-1">
+      <div class="n-surah"><span id="surah-ar" lang="ar" dir="rtl"></span><span class="n-surah-en" id="surah-en"></span></div>
+      <p class="n-ayah" lang="ar" dir="rtl"><span id="ayah-text"></span> <span class="n-end" id="ayah-end" aria-hidden="true"></span></p>
+      <p class="n-error" id="error" hidden></p>
+    </section>
+    <span class="n-more" id="more" aria-hidden="true">scroll ↓</span>
+  </div>
+
+  <!-- Search, right in the notch: surah, juz, ayah, page or Arabic words. -->
+  <div class="n-search" id="search" hidden role="search">
+    <form class="n-search-bar" id="search-form" autocomplete="off">
+      <input id="search-q" type="search" placeholder="kahfi · juz 30 · 2:255 · hal 50 · الرحمن" spellcheck="false" dir="auto" aria-label="Go to a surah, juz, ayah, page or Arabic words">
+      <button type="button" class="n-x" id="search-close" aria-label="Close search (esc)" title="Close (esc)">×</button>
+    </form>
+    <ul class="n-results" id="results" aria-live="polite"></ul>
+  </div>
+
+  <footer class="n-foot">
+    <button type="button" class="n-btn" id="next" title="Next ayah (←)" aria-label="Next ayah">←</button>
+    <span class="n-counter" id="counter"></span>
+    <button type="button" class="n-hide" id="search-btn" title="Go to a surah, juz, ayah, page or Arabic words (g)" aria-label="Search and jump to">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>Search
+    </button>
+    <button type="button" class="n-hide" id="hide" title="Fold back into the notch (esc). Hover the notch to bring it back." aria-label="Hide: fold back into the notch">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>Hide
+    </button>
+    <button type="button" class="n-btn" id="prev" title="Previous ayah (→)" aria-label="Previous ayah">→</button>
+  </footer>
+</main>
+</body>
+</html>

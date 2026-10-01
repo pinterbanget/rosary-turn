@@ -1,18 +1,18 @@
-// The notch surface's host. On macOS it is native/QuranNotch.swift, compiled on
-// this machine the first time (no prebuilt binaries ship with quran-turn) and
+// The notch surface's host. On macOS it is native/RosaryNotch.swift, compiled on
+// this machine the first time (no prebuilt binaries ship with rosary-turn) and
 // cached by a hash of its source. On Windows it is native/notch-win.ps1, which
 // runs the reader in a frameless Edge app window (experimental, opt-in).
 import { execFile, execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ROOT } from './quran.mjs';
+import { ROOT } from './rosary.mjs';
 import { home, logError } from './state.mjs';
 
-const SWIFT = join(ROOT, 'native', 'QuranNotch.swift');
+const SWIFT = join(ROOT, 'native', 'RosaryNotch.swift');
 const PS1 = join(ROOT, 'native', 'notch-win.ps1');
-const APP_NAME = 'QuranTurnNotch';
-const disabled = () => Boolean(process.env.QURAN_TURN_NO_WINDOW);
+const APP_NAME = 'RosaryTurnNotch';
+const disabled = () => Boolean(process.env.ROSARY_TURN_NO_WINDOW);
 
 let mac; // cached macOS major version
 const macMajor = () => {
@@ -29,7 +29,7 @@ function findSwiftc() {
   return swiftc;
 }
 
-// explicit: the user asked for the notch (`quran-turn surface notch`).
+// explicit: the user asked for the notch (`rosary-turn surface notch`).
 // macOS 12+ with the Swift compiler (Command Line Tools) by default; Windows
 // only when asked for, while it is experimental.
 export function notchSupported({ explicit = false } = {}) {
@@ -53,8 +53,8 @@ export function notchBuild() {
 const INFO_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleIdentifier</key><string>tech.allrize.quran-turn.notch</string>
-  <key>CFBundleName</key><string>Quran Turn</string>
+  <key>CFBundleIdentifier</key><string>tech.allrize.rosary-turn.notch</string>
+  <key>CFBundleName</key><string>Rosary Turn</string>
   <key>CFBundleExecutable</key><string>${APP_NAME}</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>1</string>

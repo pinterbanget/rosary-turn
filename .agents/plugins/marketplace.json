@@ -1,11 +1,19 @@
 {
-  "name": "quran-turn",
-  "interface": { "displayName": "Quran Turn" },
+  "name": "rosary-turn",
+  "interface": {
+    "displayName": "Rosary Turn"
+  },
   "plugins": [
     {
-      "name": "quran-turn",
-      "source": { "source": "local", "path": "./" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "name": "rosary-turn",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
       "category": "Productivity"
     }
   ]

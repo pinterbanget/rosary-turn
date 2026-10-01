@@ -1,136 +1,74 @@
-// All state is plain JSON under ~/.quran-turn (or $QURAN_TURN_HOME):
-//   state.json      where you are:           {surah, ayah, updated_at}
-//   agent.json      what the agent is doing: {status, agent, host, session_id, turn_started_at, turn_from, ayat, last_turn}
-//   sessions.jsonl  one line per finished turn
-//   config.json     {enabled, autoOpen, autoSwitch, surface}
-//                   surface: "auto" (notch on macOS, window elsewhere) | "notch" | "window"
-// Delete any of them at any time; defaults come back.
 import { appendFileSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { calendarDay, reference, suggestedMystery, validPosition } from '../app/rosary-core.js';
 
-export const home = () => process.env.QURAN_TURN_HOME || join(homedir(), '.quran-turn');
-
+export const home = () => process.env.ROSARY_TURN_HOME || join(homedir(), '.rosary-turn');
 const DEFAULTS = {
-  'state.json': { surah: 1, ayah: 1, updated_at: null },
+  'state.json': { mystery: null, step: 0, language: 'en', prayerLanguage: 'en', day: null, updated_at: null, revision: 0 },
   'agent.json': { status: 'idle' },
-  'config.json': { enabled: true, autoOpen: true, autoSwitch: true, surface: 'auto' },
+  'config.json': { enabled: true, autoOpen: true, autoSwitch: true, surface: 'auto', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
 };
-
 export function readJson(name) {
-  try {
-    return { ...DEFAULTS[name], ...JSON.parse(readFileSync(join(home(), name), 'utf8')) };
-  } catch {
-    return { ...DEFAULTS[name] };
-  }
+  try { return { ...DEFAULTS[name], ...JSON.parse(readFileSync(join(home(), name), 'utf8')) }; }
+  catch { return { ...DEFAULTS[name] }; }
 }
-
 export function writeJson(name, value) {
   mkdirSync(home(), { recursive: true });
-  const path = join(home(), name);
-  const tmp = `${path}.${process.pid}.tmp`;
+  const path = join(home(), name), tmp = `${path}.${process.pid}.tmp`;
   writeFileSync(tmp, JSON.stringify(value, null, 2) + '\n');
-  renameSync(tmp, path); // atomic on the same filesystem
+  renameSync(tmp, path);
 }
-
-export function appendSession(entry) {
-  mkdirSync(home(), { recursive: true });
-  appendFileSync(join(home(), 'sessions.jsonl'), JSON.stringify(entry) + '\n');
-}
-
 export function readSessions() {
-  try {
-    return readFileSync(join(home(), 'sessions.jsonl'), 'utf8')
-      .split('\n')
-      .filter(Boolean)
-      .map((l) => JSON.parse(l));
-  } catch {
-    return [];
-  }
+  try { return readFileSync(join(home(), 'sessions.jsonl'), 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line)); }
+  catch { return []; }
 }
-
-export function logError(err) {
+export function logError(error) {
   try {
     mkdirSync(home(), { recursive: true });
-    appendFileSync(join(home(), 'error.log'), `${new Date().toISOString()} ${err?.stack || err}\n`);
+    appendFileSync(join(home(), 'error.log'), `${new Date().toISOString()} ${error?.stack || error}\n`);
   } catch {}
 }
-
-const now = () => new Date().toISOString();
-const ref = (p) => `${p.surah}:${p.ayah}`;
-
-// ── Position ────────────────────────────────────────────────────────────────
-
-// counts[s] = number of ayat in surah s (1-based). Returns a clean position or null.
-export function validPosition(p, counts) {
-  const surah = Number(p?.surah);
-  const ayah = Number(p?.ayah);
-  if (!Number.isInteger(surah) || surah < 1 || surah > 114) return null;
-  if (!Number.isInteger(ayah) || ayah < 1 || ayah > counts[surah]) return null;
-  return { surah, ayah };
+// Change days at the start of a turn, never halfway through an active Rosary.
+export function ensureDailyPosition(now = new Date(), { startTurn = false } = {}) {
+  const saved = readJson('state.json');
+  const day = calendarDay(now, readJson('config.json').timeZone);
+  if (validPosition(saved) && (saved.day === day || !startTurn)) return saved;
+  const language = saved.language === 'id' ? 'id' : 'en';
+  const position = { mystery: suggestedMystery(day), step: 0, language, prayerLanguage: saved.prayerLanguage === 'la' ? 'la' : language, day, updated_at: null, revision: (saved.revision || 0) + 1 };
+  writeJson('state.json', position);
+  return position;
 }
-
-// Global 0-based index across the mushaf, used to tell "next ayah" from a jump.
-export function globalIndex(p, counts) {
-  let i = 0;
-  for (let s = 1; s < p.surah; s++) i += counts[s];
-  return i + p.ayah - 1;
-}
-
-// Save a new position. While the agent is working, stepping to the very next
-// ayah counts toward this turn; jumps and going back do not.
-export function setPosition(next, counts) {
-  const prev = readJson('state.json');
-  const pos = { ...next, updated_at: now() };
-  writeJson('state.json', pos);
+export function setPosition(input) {
+  const next = validPosition(input);
+  if (!next) throw new Error('invalid Rosary position');
+  const prev = ensureDailyPosition();
+  const position = { ...next, day: prev.day, updated_at: new Date().toISOString(), revision: (prev.revision || 0) + 1 };
+  writeJson('state.json', position);
   const agent = readJson('agent.json');
-  if (agent.status === 'working' && globalIndex(next, counts) === globalIndex(prev, counts) + 1) {
-    agent.ayat = (agent.ayat || 0) + 1;
+  if (agent.status === 'working' && next.mystery === prev.mystery && next.language === prev.language && next.step === prev.step + 1) {
+    agent.prayers = (agent.prayers || 0) + 1;
     writeJson('agent.json', agent);
   }
-  return { position: pos, agent };
+  return { position, agent };
 }
-
-// ── Turn state machine ──────────────────────────────────────────────────────
-//   idle/done ──start──▶ working ──needs-you──▶ needs_you ──resume──▶ working
-//   working/needs_you ──stop──▶ done  (one line appended to sessions.jsonl)
-
-function finishTurn(agent, { interrupted = false } = {}) {
-  const pos = readJson('state.json');
-  const entry = {
-    started_at: agent.turn_started_at,
-    ended_at: now(),
-    from: agent.turn_from,
-    to: ref(pos),
-    ayat: agent.ayat || 0,
-    agent: agent.agent,
-  };
+function finishTurn(agent, interrupted = false) {
+  const entry = { started_at: agent.turn_started_at, ended_at: new Date().toISOString(), from: agent.turn_from, to: reference(readJson('state.json')), prayers: agent.prayers || 0, agent: agent.agent };
   if (interrupted) entry.interrupted = true;
-  appendSession(entry);
+  mkdirSync(home(), { recursive: true });
+  appendFileSync(join(home(), 'sessions.jsonl'), JSON.stringify(entry) + '\n');
   return entry;
 }
-
-// host: macOS bundle id of the app the agent runs in (for "Back to Claude").
-export function applyHook(event, { agent: agentName = 'claude', session_id = null, host = null } = {}) {
-  const config = readJson('config.json');
+export function applyHook(event, { agent: name = 'claude', session_id = null, host = null, now = new Date() } = {}) {
   let agent = readJson('agent.json');
-  const active = agent.status === 'working' || agent.status === 'needs_you';
+  if (!readJson('config.json').enabled) return agent;
+  const active = ['working', 'needs_you'].includes(agent.status);
   const sameSession = !session_id || !agent.session_id || agent.session_id === session_id;
-
   if (event === 'start') {
-    if (!config.enabled) return agent;
-    let last_turn = agent.last_turn;
-    if (active) last_turn = finishTurn(agent, { interrupted: true });
-    agent = {
-      status: 'working',
-      agent: agentName,
-      host,
-      session_id,
-      turn_started_at: now(),
-      turn_from: ref(readJson('state.json')),
-      ayat: 0,
-      last_turn,
-    };
+    if (!readJson('config.json').enabled) return agent;
+    const last_turn = active ? finishTurn(agent, true) : agent.last_turn;
+    const position = ensureDailyPosition(now, { startTurn: true });
+    agent = { status: 'working', agent: name, host, session_id, turn_started_at: now.toISOString(), turn_from: reference(position), prayers: 0, last_turn };
   } else if (event === 'needs-you') {
     if (agent.status !== 'working' || !sameSession) return agent;
     agent = { ...agent, status: 'needs_you' };
@@ -140,9 +78,7 @@ export function applyHook(event, { agent: agentName = 'claude', session_id = nul
   } else if (event === 'stop') {
     if (!active || !sameSession) return agent;
     agent = { status: 'done', agent: agent.agent, host: agent.host, last_turn: finishTurn(agent) };
-  } else {
-    throw new Error(`Unknown hook event: ${event}`);
-  }
+  } else throw new Error(`Unknown hook event: ${event}`);
   writeJson('agent.json', agent);
   return agent;
 }

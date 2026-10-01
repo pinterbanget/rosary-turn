@@ -1,16 +1,16 @@
 {
-  "name": "quran-turn",
+  "name": "rosary-turn",
   "owner": {
-    "name": "Rizaldy"
+    "name": "pinterbanget"
   },
   "metadata": {
-    "description": "Quran Turn: read the Qur’an while your coding agent takes its turn."
+    "description": "Rosary Turn, based on Quran Turn by Rizaldy."
   },
   "plugins": [
     {
-      "name": "quran-turn",
+      "name": "rosary-turn",
       "source": "./",
-      "description": "Read the Qur'an while your agent takes its turn. Local-first, offline, no account."
+      "description": "Pray the Rosary while your coding agent works."
     }
   ]
 }

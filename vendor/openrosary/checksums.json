@@ -1,0 +1,8 @@
+{
+  "vendor/openrosary/prayers.ts": "760fe1a60db216847cf241bc577ca64f22d3fef05b61828b423aa47fcc3680ec",
+  "vendor/openrosary/rosaryState.ts": "247a71155b29152205b2d960b5241a5a3f38c3d8ac9040f256cb620cdfc6cec4",
+  "app/prayers.js": "4c4d6de1b93d1bf30b3e6488651b74c759e71643647e9ad2ee1cdb2075182483",
+  "app/rosary-sequence.js": "255c9ff0195ba2999b3cd01650db3bdb982627db3cb142db3d3e4067b509b965",
+  "app/openrosary.css": "bd68e706b35c1fb3801c6ed4ba16bce56b63ec36f17218a87b496ad47bc0feb6",
+  "app/fonts/Geist.woff2": "9b6f5ff45b278c744b5f379a2c4ecbaf858a842b8eaf82ac8d21b699ca16c608"
+}

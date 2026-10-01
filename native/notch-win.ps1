@@ -1,15 +1,15 @@
-# Quran Turn · notch host for Windows (experimental).
+# Rosary Turn · notch host for Windows (experimental).
 #
 # Windows has no notch, so the reader drops from the top-centre of the screen
 # like a curtain while your agent works and folds back up when the turn ends.
 # It is the same page as on macOS (app/notch.html, served by the local
-# quran-turn server), shown in a Microsoft Edge app window whose title bar and
+# rosary-turn server), shown in a Microsoft Edge app window whose title bar and
 # frame are removed. Nothing is installed: Edge ships with Windows 10/11 and
 # PowerShell compiles the few Win32 calls below on the fly.
 #
 # The page posts open/close/height to the server; this script long-polls
 # GET /api/surface and moves the window. Turn it on with:
-#   quran-turn surface notch
+#   rosary-turn surface notch
 param(
   [Parameter(Mandatory = $true)][string]$Url,
   [string]$Build = ''
@@ -57,12 +57,12 @@ $edge = @(
 if (-not $edge) { exit 1 }
 
 # A separate Edge profile, so this window never mixes with your own browsing.
-$profileDir = Join-Path $env:LOCALAPPDATA 'quran-turn\edge'
+$profileDir = Join-Path $env:LOCALAPPDATA 'rosary-turn\edge'
 New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
 $page = "${Url}notch.html?host=win&nw=0&nh=34&build=$Build"
 Start-Process -FilePath $edge -ArgumentList @("--app=$page", "--user-data-dir=$profileDir", '--window-size=460,240', '--window-position=-3000,-3000', '--no-first-run') | Out-Null
 
-$title = 'Quran Turn notch'
+$title = 'Rosary Turn notch'
 $hwnd = [IntPtr]::Zero
 for ($i = 0; $i -lt 100 -and $hwnd -eq [IntPtr]::Zero; $i++) { Start-Sleep -Milliseconds 150; $hwnd = [QtWin]::Find($title) }
 if ($hwnd -eq [IntPtr]::Zero) { exit 1 }

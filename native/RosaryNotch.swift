@@ -1,7 +1,7 @@
-// Quran Turn · notch host (macOS 12+).
+// Rosary Turn · notch host (macOS 12+).
 //
 // A small AppKit shell around the reader's notch page (app/notch.html, served
-// by the local quran-turn server). It draws a black shape that sits exactly on
+// by the local rosary-turn server). It draws a black shape that sits exactly on
 // the MacBook notch, grows out of it like a curtain while your agent works and
 // folds back in when the turn ends. On a Mac without a notch the same shape
 // comes out of the middle of the menu bar.
@@ -9,14 +9,14 @@
 // Everything about reading (the verified Qur'an text, your place, the agent's
 // state, when to open or close) lives in the page. This file only draws,
 // animates and passes a few events back and forth. It is compiled on your Mac
-// by quran-turn (src/notch.mjs); no prebuilt binary ships with the plugin.
+// by rosary-turn (src/notch.mjs); no prebuilt binary ships with the plugin.
 import AppKit
 import WebKit
 
 // MARK: - Options
 
 struct Options {
-  var base = URL(string: "http://127.0.0.1:47114/")!
+  var base = URL(string: "http://127.0.0.1:47115/")!
   var build = ""
 }
 
@@ -87,7 +87,7 @@ final class ShapeView: NSView {
   let fill = CAShapeLayer()
   let mask = CAShapeLayer()
   let content = NSView()
-  // A tiny pill on the notch's bottom edge: Quran Turn is here. Barely there
+  // A tiny pill on the notch's bottom edge: Rosary Turn is here. Barely there
   // at rest, breathing while your agent works, yellow when it needs you,
   // green when the turn is done, teal under the pointer.
   let indicator = CALayer()

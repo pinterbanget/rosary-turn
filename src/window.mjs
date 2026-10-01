@@ -3,16 +3,17 @@
 // move windows around.
 import { execFile, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 export { notchBuild, notchSupported, openNotch } from './notch.mjs';
 
 const MAC_APPS = ['Google Chrome', 'Brave Browser', 'Microsoft Edge', 'Chromium'];
 const LINUX_BINS = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser', 'brave-browser', 'microsoft-edge'];
 const SIZE = '--window-size=460,740';
-const disabled = () => Boolean(process.env.QURAN_TURN_NO_WINDOW);
+const disabled = () => Boolean(process.env.ROSARY_TURN_NO_WINDOW);
 
 function run(cmd, args) {
-  const child = spawn(cmd, args, { detached: true, stdio: 'ignore' });
+  const child = spawn(cmd, args, { detached: true, stdio: 'ignore', windowsHide: true });
   child.on('error', () => {});
   child.unref();
 }
@@ -34,7 +35,12 @@ export function openWindow(url) {
     if (app) return run('open', ['-na', app, '--args', `--app=${url}`, SIZE]);
     return run('open', [url]);
   }
-  if (process.platform === 'win32') return run('cmd', ['/c', 'start', '', url]);
+  if (process.platform === 'win32') {
+    const roots = [process.env['ProgramFiles(x86)'], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
+    const browser = roots.flatMap(root => [join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe'), join(root, 'Google', 'Chrome', 'Application', 'chrome.exe')]).find(existsSync);
+    if (browser) return run(browser, [`--app=${url}`, SIZE]);
+    return run('cmd', ['/c', 'start', '', url]);
+  }
   const bin = LINUX_BINS.find(onPath);
   if (bin) return run(bin, [`--app=${url}`, SIZE]);
   return run('xdg-open', [url]);

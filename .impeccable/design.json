@@ -1,0 +1,356 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-01T17:14:10.616Z",
+  "title": "Design System: Rosary Turn",
+  "extensions": {
+    "colorMeta": {
+      "accent-dark": {
+        "role": "primary",
+        "displayName": "Sky Blue",
+        "tonalRamp": [
+          "oklch(15% 0.08617 248.90)",
+          "oklch(26% 0.08617 248.90)",
+          "oklch(38% 0.08617 248.90)",
+          "oklch(49% 0.08617 248.90)",
+          "oklch(61% 0.08617 248.90)",
+          "oklch(72% 0.08617 248.90)",
+          "oklch(84% 0.08617 248.90)",
+          "oklch(95% 0.08617 248.90)"
+        ]
+      },
+      "accent-light": {
+        "role": "primary",
+        "displayName": "Prayer Blue",
+        "tonalRamp": [
+          "oklch(15% 0.13461 250.31)",
+          "oklch(26% 0.13461 250.31)",
+          "oklch(38% 0.13461 250.31)",
+          "oklch(49% 0.13461 250.31)",
+          "oklch(61% 0.13461 250.31)",
+          "oklch(72% 0.13461 250.31)",
+          "oklch(84% 0.13461 250.31)",
+          "oklch(95% 0.13461 250.31)"
+        ]
+      },
+      "background-dark": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "tonalRamp": [
+          "oklch(15% 0.03229 258.68)",
+          "oklch(26% 0.03229 258.68)",
+          "oklch(38% 0.03229 258.68)",
+          "oklch(49% 0.03229 258.68)",
+          "oklch(61% 0.03229 258.68)",
+          "oklch(72% 0.03229 258.68)",
+          "oklch(84% 0.03229 258.68)",
+          "oklch(95% 0.03229 258.68)"
+        ]
+      },
+      "background-light": {
+        "role": "neutral",
+        "displayName": "Cool Ground",
+        "tonalRamp": [
+          "oklch(15% 0.00622 255.47)",
+          "oklch(26% 0.00622 255.47)",
+          "oklch(38% 0.00622 255.47)",
+          "oklch(49% 0.00622 255.47)",
+          "oklch(61% 0.00622 255.47)",
+          "oklch(72% 0.00622 255.47)",
+          "oklch(84% 0.00622 255.47)",
+          "oklch(95% 0.00622 255.47)"
+        ]
+      },
+      "panel-dark": {
+        "role": "neutral",
+        "displayName": "Night Panel",
+        "tonalRamp": [
+          "oklch(15% 0.04065 260.82)",
+          "oklch(26% 0.04065 260.82)",
+          "oklch(38% 0.04065 260.82)",
+          "oklch(49% 0.04065 260.82)",
+          "oklch(61% 0.04065 260.82)",
+          "oklch(72% 0.04065 260.82)",
+          "oklch(84% 0.04065 260.82)",
+          "oklch(95% 0.04065 260.82)"
+        ]
+      },
+      "panel-light": {
+        "role": "neutral",
+        "displayName": "White Panel",
+        "tonalRamp": [
+          "oklch(15% 0.00000 89.88)",
+          "oklch(26% 0.00000 89.88)",
+          "oklch(38% 0.00000 89.88)",
+          "oklch(49% 0.00000 89.88)",
+          "oklch(61% 0.00000 89.88)",
+          "oklch(72% 0.00000 89.88)",
+          "oklch(84% 0.00000 89.88)",
+          "oklch(95% 0.00000 89.88)"
+        ]
+      },
+      "text-dark": {
+        "role": "neutral",
+        "displayName": "Pale Text",
+        "tonalRamp": [
+          "oklch(15% 0.00574 264.53)",
+          "oklch(26% 0.00574 264.53)",
+          "oklch(38% 0.00574 264.53)",
+          "oklch(49% 0.00574 264.53)",
+          "oklch(61% 0.00574 264.53)",
+          "oklch(72% 0.00574 264.53)",
+          "oklch(84% 0.00574 264.53)",
+          "oklch(95% 0.00574 264.53)"
+        ]
+      },
+      "text-light": {
+        "role": "neutral",
+        "displayName": "Ink Text",
+        "tonalRamp": [
+          "oklch(15% 0.05210 255.14)",
+          "oklch(26% 0.05210 255.14)",
+          "oklch(38% 0.05210 255.14)",
+          "oklch(49% 0.05210 255.14)",
+          "oklch(61% 0.05210 255.14)",
+          "oklch(72% 0.05210 255.14)",
+          "oklch(84% 0.05210 255.14)",
+          "oklch(95% 0.05210 255.14)"
+        ]
+      },
+      "muted-dark": {
+        "role": "neutral",
+        "displayName": "Mist Text",
+        "tonalRamp": [
+          "oklch(15% 0.02918 256.50)",
+          "oklch(26% 0.02918 256.50)",
+          "oklch(38% 0.02918 256.50)",
+          "oklch(49% 0.02918 256.50)",
+          "oklch(61% 0.02918 256.50)",
+          "oklch(72% 0.02918 256.50)",
+          "oklch(84% 0.02918 256.50)",
+          "oklch(95% 0.02918 256.50)"
+        ]
+      },
+      "muted-light": {
+        "role": "neutral",
+        "displayName": "Slate Text",
+        "tonalRamp": [
+          "oklch(15% 0.04491 254.48)",
+          "oklch(26% 0.04491 254.48)",
+          "oklch(38% 0.04491 254.48)",
+          "oklch(49% 0.04491 254.48)",
+          "oklch(61% 0.04491 254.48)",
+          "oklch(72% 0.04491 254.48)",
+          "oklch(84% 0.04491 254.48)",
+          "oklch(95% 0.04491 254.48)"
+        ]
+      },
+      "glass-dark": {
+        "role": "neutral",
+        "displayName": "Quiet Edge Dark",
+        "tonalRamp": [
+          "oklch(15% 0.00000 89.88)",
+          "oklch(26% 0.00000 89.88)",
+          "oklch(38% 0.00000 89.88)",
+          "oklch(49% 0.00000 89.88)",
+          "oklch(61% 0.00000 89.88)",
+          "oklch(72% 0.00000 89.88)",
+          "oklch(84% 0.00000 89.88)",
+          "oklch(95% 0.00000 89.88)"
+        ]
+      },
+      "glass-light": {
+        "role": "neutral",
+        "displayName": "Quiet Edge Light",
+        "tonalRamp": [
+          "oklch(15% 0.13461 250.31)",
+          "oklch(26% 0.13461 250.31)",
+          "oklch(38% 0.13461 250.31)",
+          "oklch(49% 0.13461 250.31)",
+          "oklch(61% 0.13461 250.31)",
+          "oklch(72% 0.13461 250.31)",
+          "oklch(84% 0.13461 250.31)",
+          "oklch(95% 0.13461 250.31)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Parenthesized OpenRosary selection wordmark."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Centered mystery heading."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Centered prayer label."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prayer text with preserved line breaks."
+      },
+      "action": {
+        "displayName": "Action",
+        "purpose": "Mystery choices and navigation controls."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Progress, instructions, and reading language."
+      }
+    },
+    "shadows": [
+      {
+        "name": "mystery-hover",
+        "value": "0 8px 24px rgba(65, 134, 205, 0.15)",
+        "purpose": "Source mystery-button hover depth."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "all 0.18s",
+        "purpose": "Mystery-button hover transition."
+      },
+      {
+        "name": "progress-transition",
+        "value": "transform 0.3s ease",
+        "purpose": "Progress fill changes."
+      },
+      {
+        "name": "theme-transition",
+        "value": "background-color .25s ease, color .25s ease, border-color .25s ease",
+        "purpose": "Source theme change."
+      },
+      {
+        "name": "theme-reveal",
+        "value": ".45s cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Source view-transition circular theme reveal; disabled for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "640px"
+      },
+      {
+        "name": "narrow",
+        "value": "350px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Mystery Button",
+      "kind": "button",
+      "refersTo": "button-mystery",
+      "description": "Shared mystery and prayer navigation control.",
+      "html": "<button class=\"ds-control ds-mystery\">next prayer</button>",
+      "css": ".ds-mystery { font-family:var(--font-geist-sans),system-ui,sans-serif; color: var(--muted);\r\n  text-decoration: none;\r\n  padding: 8px 12px;\r\n  border-radius: 6px;\r\n  background: transparent;\r\n  border: 1px solid rgba(255, 255, 255, 0.03);\r\n  transition: all 0.18s;\r\n  font-family: inherit;\r\n  font-size: 14px; font-size: 16px; font-size: 15px; text-align: center; font-size:16px; min-height:44px; cursor:pointer; } .ds-mystery:hover { color: var(--text);\r\n  border-color: rgba(157, 206, 255, 0.32);\r\n  box-shadow: 0 8px 24px rgba(65, 134, 205, 0.15); } .ds-mystery:disabled { opacity:.5; cursor:default; } .ds-control:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }"
+    },
+    {
+      "name": "Suggested Mystery",
+      "kind": "button",
+      "refersTo": "button-mystery-suggested",
+      "description": "Today’s suggested mystery uses accent text and border.",
+      "html": "<button class=\"ds-control ds-mystery ds-suggested\">sorrowful</button>",
+      "css": ".ds-mystery { font-family:var(--font-geist-sans),system-ui,sans-serif; color: var(--muted);\r\n  text-decoration: none;\r\n  padding: 8px 12px;\r\n  border-radius: 6px;\r\n  background: transparent;\r\n  border: 1px solid rgba(255, 255, 255, 0.03);\r\n  transition: all 0.18s;\r\n  font-family: inherit;\r\n  font-size: 14px; font-size: 16px; font-size: 15px; text-align: center; font-size:16px; min-height:44px; cursor:pointer; } .ds-mystery:hover { color: var(--text);\r\n  border-color: rgba(157, 206, 255, 0.32);\r\n  box-shadow: 0 8px 24px rgba(65, 134, 205, 0.15); } .ds-mystery:disabled { opacity:.5; cursor:default; } .ds-control:focus-visible { outline:2px solid var(--accent); outline-offset:4px; } .ds-suggested { color:var(--accent); border-color:var(--accent); }"
+    },
+    {
+      "name": "Back Control",
+      "kind": "button",
+      "refersTo": "button-back",
+      "description": "Borderless reader and session return control.",
+      "html": "<button class=\"ds-control ds-back\">← mysteries</button>",
+      "css": ".ds-back { display: inline-block;\r\n  color: var(--muted);\r\n  text-decoration: none;\r\n  font-size: 13px;\r\n  transition: color 0.2s; white-space: nowrap; background: transparent; border: 0; font-family: inherit; padding: 10px 0; min-height: 44px; cursor:pointer; } .ds-back:hover { color:var(--accent); } .ds-control:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }"
+    },
+    {
+      "name": "Theme Control",
+      "kind": "button",
+      "refersTo": "button-theme",
+      "description": "Compact light/dark switch.",
+      "html": "<button class=\"ds-control ds-theme\" aria-label=\"Switch colour mode\">light</button>",
+      "css": ".ds-theme { background: transparent; border: 1px solid var(--glass); border-radius: 6px; padding: 8px; color: var(--muted); font: inherit; font-size: 13px; min-height: 44px; cursor:pointer; } .ds-control:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }"
+    },
+    {
+      "name": "Language Field",
+      "kind": "input",
+      "refersTo": "field-language",
+      "description": "Native English/Indonesian selection.",
+      "html": "<select class=\"ds-control ds-language\" aria-label=\"Reading language\"><option>EN</option><option>ID</option></select>",
+      "css": ".ds-language { background: var(--panel);\r\n  border: 1px solid rgba(255, 255, 255, 0.1);\r\n  color: var(--muted);\r\n  padding: 6px 12px;\r\n  border-radius: 4px;\r\n  font-family: inherit;\r\n  font-size: 12px;\r\n  cursor: pointer;\r\n  transition: all 0.18s;\r\n  appearance: none;\r\n  -webkit-appearance: none;\r\n  background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa6b2' d='M6 8L2 4h8z'/%3E%3C/svg%3E\");\r\n  background-repeat: no-repeat;\r\n  background-position: right 8px center;\r\n  padding-right: 28px; font-size: 14px; font-size:14px; min-height:44px; } .ds-language:hover,.ds-language:focus { color:var(--accent); border-color:rgba(157,206,255,.35); } .ds-language option { background:var(--panel); color:var(--text); } .ds-control:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }"
+    },
+    {
+      "name": "Latin Checkbox",
+      "kind": "input",
+      "description": "Native optional Latin prayer control.",
+      "html": "<label class=\"ds-latin\"><input class=\"ds-control\" type=\"checkbox\"> latin</label>",
+      "css": ".ds-latin { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; font-size: 12px; } .ds-latin input { accent-color:var(--accent); } .ds-control:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }"
+    },
+    {
+      "name": "Mystery Navigation",
+      "kind": "nav",
+      "description": "Source-style horizontal group that stacks on mobile.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Mystery selection\"><button class=\"ds-control ds-mystery\">joyful</button><button class=\"ds-control ds-mystery\">luminous</button><button class=\"ds-control ds-mystery ds-suggested\">sorrowful</button><button class=\"ds-control ds-mystery\">glorious</button></nav>",
+      "css": ".ds-mystery { font-family:var(--font-geist-sans),system-ui,sans-serif; color: var(--muted);\r\n  text-decoration: none;\r\n  padding: 8px 12px;\r\n  border-radius: 6px;\r\n  background: transparent;\r\n  border: 1px solid rgba(255, 255, 255, 0.03);\r\n  transition: all 0.18s;\r\n  font-family: inherit;\r\n  font-size: 14px; font-size: 16px; font-size: 15px; text-align: center; font-size:16px; min-height:44px; cursor:pointer; } .ds-mystery:hover { color: var(--text);\r\n  border-color: rgba(157, 206, 255, 0.32);\r\n  box-shadow: 0 8px 24px rgba(65, 134, 205, 0.15); } .ds-mystery:disabled { opacity:.5; cursor:default; } .ds-control:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }.ds-nav { display: flex;\r\n  gap: 12px;\r\n  margin-top: 24px;\r\n  flex-wrap: wrap;  } .ds-suggested { color:var(--accent); border-color:var(--accent); } @media(max-width:640px) { .ds-nav { flex-direction:column; } .ds-mystery { font-size:15px; text-align:center; } }"
+    },
+    {
+      "name": "Prayer Panel",
+      "kind": "card",
+      "refersTo": "card-prayer",
+      "description": "The scrollable, focusable reading surface.",
+      "html": "<div class=\"ds-control ds-prayer\" tabindex=\"0\" aria-label=\"Prayer text\"><p class=\"ds-text\">In the name of the Father, and of the Son, and of the Holy Spirit. Amen.</p></div>",
+      "css": ".ds-prayer { background:var(--panel); border:1px solid var(--glass); border-radius:10px; padding:24px; overflow-y:auto; max-height:240px; color:var(--text); } .ds-prayer::before { content: '';\r\n  display: block;\r\n  height: 1px;\r\n  margin-bottom: 16px;\r\n  background: linear-gradient(90deg, rgba(157, 206, 255, 0.2), transparent); } .ds-text { font-family:var(--font-geist-sans),system-ui,sans-serif; font-size:18px; line-height:1.7; white-space:pre-line; margin:0; color:var(--text); } @media(max-width:640px) { .ds-prayer { padding:16px; } .ds-text { font-size:17px; } } .ds-control:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }"
+    },
+    {
+      "name": "Session Status",
+      "kind": "custom",
+      "description": "Compact live status; attention and completion colors are scoped here.",
+      "html": "<header class=\"ds-strip\" data-status=\"working\"><span role=\"status\">Codex is working · &lt;1 min</span></header>",
+      "css": ".ds-strip { max-width: 800px; margin: 0 auto; padding: 14px 24px; display: flex; gap: 12px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--glass); color: var(--muted); font-size: 13px; padding: 8px 20px; padding: 5px 18px; font-size: 12px; font-family:var(--font-geist-sans),system-ui,sans-serif; } .ds-strip [role=status] { min-width:0; overflow-wrap:anywhere; } .ds-strip[data-status=working] [role=status] { color:var(--accent); } .ds-strip[data-status=needs_you] [role=status] { color:#f2cc7a; } .ds-strip[data-status=done] [role=status] { color:#9ad9b2; } :host-context([data-theme=light]) .ds-strip[data-status=needs_you] [role=status] { color:#805306; } :host-context([data-theme=light]) .ds-strip[data-status=done] [role=status] { color:#246440; }"
+    },
+    {
+      "name": "Prayer Progress",
+      "kind": "custom",
+      "refersTo": "progress-fill",
+      "description": "Thin accent fill with a centered numeric count.",
+      "html": "<div class=\"ds-track\" role=\"progressbar\" aria-label=\"Rosary progress\" aria-valuemin=\"0\" aria-valuemax=\"80\" aria-valuenow=\"2\"><div class=\"ds-fill\" style=\"transform:scaleX(.025)\"></div></div><span class=\"ds-count\">2/80</span>",
+      "css": ".ds-track { height: 4px;\r\n  background: rgba(255, 255, 255, 0.05);\r\n  border-radius: 2px;\r\n  overflow: hidden; } .ds-fill { width: 100%;\r\n  height: 100%;\r\n  background: var(--accent);\r\n  transform-origin: left center;\r\n  transition: transform 0.3s ease; } .ds-count { display: block;\r\n  text-align: center;\r\n  font-size: 12px;\r\n  color: var(--muted);\r\n  margin-top: 8px; font-size: 14px; font-size:14px; font-family:var(--font-geist-sans),system-ui,sans-serif; } @media(prefers-reduced-motion:reduce) { .ds-fill { transition:none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The OpenRosary Reader",
+    "overview": "The OpenRosary Reader preserves the user's requested 1:1 web feel: blue accent, cool grounds, Geist type, restrained controls, and space around prayer text. The source interface is the visual authority. This record merges the build's provisional direction with implemented CSS; its descriptive names label observed roles rather than introduce a new visual identity.\n\nThe system uses one column and tonal panels. Coding-session information occupies a compact strip, leaving prayer content dominant. Authorship remains visible in a small linked footer. Route strategy and the bounded native-curtain adaptation live in `.impeccable/surfaces/app-reader-js.md`.",
+    "keyCharacteristics": [
+      "Cool neutral grounds with one blue accent in each theme.",
+      "Local Geist with bold centered headings and regular prayer text.",
+      "One scrollable prayer panel, slim progress, and quiet navigation.",
+      "Original Quran Turn and OpenRosary authorship visible in the footer."
+    ],
+    "rules": [
+      {
+        "name": "The Theme Pair Rule",
+        "body": "Use the active background, panel, text, muted, accent, and glass custom properties together; preserve both OpenRosary theme sets.",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Panel Rule",
+        "body": "Keep the prayer panel flat at rest; preserve the source's tonal surface and subtle edge.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve the OpenRosary theme pairs, local Geist, type hierarchy, and spacing.",
+      "Do retain the parenthesized wordmark and lowercase mystery choices.",
+      "Do keep original authorship visible and linked.",
+      "Do keep text status, progress count, keyboard focus, and visible navigation alongside color and gestures.",
+      "Do honor reduced-motion preferences for reader animation."
+    ],
+    "donts": [
+      "Don't replace the requested OpenRosary identity with a newly invented visual world.",
+      "Don't spread session amber or green into the prayer palette.",
+      "Don't add a resting shadow to the prayer panel.",
+      "Don't promote unused upstream styles into new canonical components."
+    ]
+  }
+}

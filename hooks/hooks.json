@@ -1,31 +1,47 @@
 {
-  "description": "quran-turn: open the Qur'an reader while the agent works, pause it when the agent needs you, save your place when the turn ends. Hooks print nothing and never block.",
+  "description": "Rosary Turn: open while the agent works, pause when needed, save progress when done. Original session design by Rizaldy.",
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/quran-turn\" hook start", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "node --input-type=commonjs -e \"import(require('node:url').pathToFileURL((process.env.PLUGIN_ROOT || process.env.CLAUDE_PLUGIN_ROOT) + '/bin/rosary-turn').href)\" -- rosary-turn hook start",
+            "timeout": 10
+          }
         ]
       }
     ],
     "PermissionRequest": [
       {
         "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/quran-turn\" hook needs-you", "timeout": 5 }
+          {
+            "type": "command",
+            "command": "node --input-type=commonjs -e \"import(require('node:url').pathToFileURL((process.env.PLUGIN_ROOT || process.env.CLAUDE_PLUGIN_ROOT) + '/bin/rosary-turn').href)\" -- rosary-turn hook needs-you",
+            "timeout": 5
+          }
         ]
       }
     ],
     "PostToolUse": [
       {
         "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/quran-turn\" hook resume", "timeout": 5 }
+          {
+            "type": "command",
+            "command": "node --input-type=commonjs -e \"import(require('node:url').pathToFileURL((process.env.PLUGIN_ROOT || process.env.CLAUDE_PLUGIN_ROOT) + '/bin/rosary-turn').href)\" -- rosary-turn hook resume",
+            "timeout": 5
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/quran-turn\" hook stop", "timeout": 5 }
+          {
+            "type": "command",
+            "command": "node --input-type=commonjs -e \"import(require('node:url').pathToFileURL((process.env.PLUGIN_ROOT || process.env.CLAUDE_PLUGIN_ROOT) + '/bin/rosary-turn').href)\" -- rosary-turn hook stop",
+            "timeout": 5
+          }
         ]
       }
     ]

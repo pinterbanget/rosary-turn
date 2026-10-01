@@ -1,115 +1,12 @@
 # Changelog
 
-Every release of Quran Turn. The newest is on top. GitHub release notes and the timeline on [quran.allrize.tech](https://quran.allrize.tech/#changelog) are generated from this file.
+## [0.1.0] - 2026-10-01
 
-## [0.7.5] - 2026-09-29
+- Fork Quran Turn by Rizaldy, retaining upstream authorship and MIT notice.
+- Adapt its offline agent-session companion to OpenRosary's web prayer interface.
+- Bundle English, Indonesian, and Latin prayers and mystery Scripture readings.
+- Resume between coding turns and choose OpenRosary's suggested mystery on a new local day.
+- Preserve native macOS and experimental Windows curtain hosts.
+- Use a separate state directory and port, and fix Windows static-file path handling.
 
-How long your agent worked, in colour, and a steadier update path.
-
-- **How long it's been working:** beside the notch you see **● Claude · 4m** (or Codex, or whichever agent), and when the turn ends: *Claude worked 4 min · saved at 2:157*.
-- **Search and jump from the notch:** a **Search** button beside Hide (or **G** / **/**). Type a surah name or meaning, `juz 30`, `2:255`, `hal 50` or Arabic words and press Enter to jump there. Every ayah in the results is the verified text.
-- **Colours with a meaning:** teal while the agent works, **yellow** when it needs your confirmation, **green** when it's done. The tiny pill on the notch follows the same colours.
-- **Newest version wins.** A session that hasn't reloaded its plugins yet no longer swaps a newer reader back to its older one, so Claude Code and Codex (or several sessions) can run side by side after an update.
-- **`quran-turn surface notch` brings the notch up right away**, and says what's missing if it can't.
-- **Documentation:** new notch images in the README, a troubleshooting note, the `notch/` folder in your data, and debug switches for working on the notch helper. The landing page shows the timer, the Hide button and the pill.
-
-## [0.7.1] - 2026-09-29
-
-A calmer notch card.
-
-- **A clear Hide button** replaces the expand icon. It folds the card back into the notch for the rest of the turn (Esc does the same); hover the notch to peek again. **G** still opens the full reader.
-- **A fixed size:** the card is always a fifth of your screen's height, so it never grows or jumps between ayat. A long ayah scrolls inside it, with a visible scrollbar, a soft fade and a *scroll ↓* hint while there's more to read.
-- **A tiny pill on the notch** says Quran Turn is there: British racing green on black, barely visible at rest. It breathes while your agent works and turns teal when your pointer reaches the notch, just before the card peeks out.
-
-## [0.7.0] - 2026-09-28
-
-The reader comes out of your Mac's notch.
-
-- **The notch is the new default on macOS, for any agent.** When Claude Code or Codex starts working, a black curtain widens out of the notch and drops into an ayah card. When the turn ends, it shows where your place was saved and folds back in. On a Mac without a notch it comes out of the middle of the menu bar.
-- **Never cut off.** When the agent needs you, a strip slides into the card and **Space** takes you back. After a turn it waits while your mouse is on the card. Hover the notch to peek at your ayah anytime; **Esc** folds it for the turn.
-- **First run asks where to start** right in the notch: Al-Fatihah, Juz 'Amma, Al-Kahf, Yasin, Al-Mulk, or search.
-- **Nothing to install.** The small macOS helper (`native/QuranNotch.swift`) is compiled on your Mac the first time, in a few seconds, with Apple's Command Line Tools. No prebuilt binaries ship, and it needs no permissions. Without the tools, the reader uses its window as before.
-- **Same verified text.** The notch shows the same page as the reader, so every ayah still passes the SHA-256 check and `textContent`-only rendering, now shared in one module.
-- **`quran-turn surface notch | window | auto`** chooses where the reader shows up. The window and Float mode are still there.
-- **Windows (experimental, opt-in):** `quran-turn surface notch` drops the reader from the top of the screen in a frameless Edge window, using only what ships with Windows.
-
-## [0.6.0] - 2026-09-23
-
-Verified Codex hook setup, with clearer install and update guides.
-
-- **Codex CLI test passed without bypassing trust.** After reviewing and trusting Quran Turn's four hooks individually, a normal Codex turn opened the reader and saved a session identified as `codex`.
-- **Installation guide names all four hooks:** UserPromptSubmit, PermissionRequest, PostToolUse, and Stop. It explains that other plugins can appear in `/hooks` and should be reviewed separately.
-- **Update guide separates the paths:** Claude Code can enable marketplace auto-update; Codex uses the marketplace upgrade and plugin add commands, then checks hook trust for changed definitions.
-- **Landing page preview names Codex** and explains that the real reader labels the active agent. The reader and Qur'an data are unchanged.
-
-## [0.5.1] - 2026-09-23
-
-Codex installation and update instructions now include the hook trust step.
-
-- **Codex hooks need a separate review.** After installing, open interactive Codex CLI and use `/hooks` to review and trust Quran Turn's four hooks. Codex skips untrusted hooks even when the plugin is installed and enabled.
-- **Update instructions are explicit** in the README and on the landing page: refresh the marketplace, install the new version, check `codex plugin list`, restart the desktop app, and review any changed hooks.
-- The reader and Qur'an data are unchanged. Updating keeps your place.
-
-## [0.5.0] - 2026-09-23
-
-Ngaji Companion for Muse, and a tidier site.
-
-- **Ngaji Companion for Muse:** a prompt you paste into a Muse scheduled task, at [quran.allrize.tech/agent](https://quran.allrize.tech/agent). It sends 5 verses at each prayer time, 25 a day, with read, skip and continue buttons. Copy it, or share it straight to Muse from your phone.
-- **Tidier landing page.** The Update guide stays up front; the Changelog folds into one line showing the latest version, and opens from the nav. Styles and scripts are re-checked on every visit, so a new deploy never hides behind a stale browser cache.
-- The reader and hooks are unchanged. Updating is safe and keeps your place.
-
-## [0.4.1] - 2026-09-23
-
-Updating is now seamless.
-
-- **No more restarting the reader by hand.** After a plugin update, the next prompt swaps the old reader server for the new one, and an open reader window reloads itself to match. There's no `pkill` step anymore.
-- **Know when you're behind.** The reader's "visit quran.allrize.tech for updates" link carries your version, and the site tells you whether a newer one exists.
-- **Update guide and changelog timeline** in the README and on quran.allrize.tech. Release notes now come from this changelog.
-
-## [0.4.0] - 2026-09-23
-
-Start anywhere, find anything.
-
-- **One search box** (press **G**): `2:255`, `18`, `kahfi`, `yasin`, `the cave`, `juz 30`, `hal 50`, or Arabic words.
-- **Forgiving Arabic search.** Harakat are optional, and modern spelling finds Uthmani spelling ("الصلاة" finds the Uthmani word). Every result shows the verbatim Tanzil ayah.
-- **Quick starts:** Al-Fatihah, Juz 'Amma, Al-Kahf, Yasin, Al-Mulk, and Continue. You can also browse by Surah or Juz.
-- **First run asks where you'd like to start** instead of assuming 1:1.
-- **`quran-turn start juz 30`**, and anything else the search box accepts, from the terminal.
-
-## [0.3.0] - 2026-09-23
-
-Float mode.
-
-- **Float:** the reader becomes a small ayah card that stays on top of every app, beside your agent (Chrome, Edge or Brave).
-- **Nothing moves on its own.** When the agent needs you, a strip slides into the card and you go back with **Space** when you're ready, so your reading is never cut off.
-- **Smooth transitions** for the card opening and closing, the strip sliding in and out, and ayah changes.
-
-## [0.2.2] - 2026-09-23
-
-- A small "visit quran.allrize.tech for updates" line in the reader, showing the running version.
-
-## [0.2.1] - 2026-09-23
-
-- **Space reads on** after you reopen the reader following a turn. It only returns to the agent from the collapsed strip or while the agent waits on you.
-- **The collapsed strip ignores the arrow keys**, so your place can't move while you can't see it.
-
-## [0.2.0] - 2026-09-23
-
-The reader steps aside when your agent needs you.
-
-- **Balancing.** When the agent asks for permission or finishes, the reader collapses to a small strip and your agent's app comes to the front. It grows back when the agent resumes.
-- **Back to Claude / Codex** button, and **Space** does the same.
-- **A side window, never full screen** (460×740, capped at 560×900).
-- "Saved at 2:157" makes the automatic save visible.
-- `quran-turn switch on|off` turns the automatic switching on or off.
-- **Automatic releases** from GitHub Actions whenever the version changes.
-
-## [0.1.0] - 2026-09-23
-
-First release.
-
-- A quiet local reader that opens when you send your agent a prompt, pauses when it needs your permission, and saves your ayah when the turn ends.
-- **Plugins for Claude Code and Codex** from one repository and one hooks file.
-- **Tanzil Uthmani text, byte-for-byte**, pinned by SHA-256 and verified in the reader before anything renders.
-- **Fully offline:** no account, sync or telemetry. State lives in plain JSON in `~/.quran-turn`.
-- quran.allrize.tech with an optional Support button (Midtrans and Stripe).
+Original Quran Turn release history is preserved in Git history.

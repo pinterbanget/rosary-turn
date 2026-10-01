@@ -1,0 +1,598 @@
+:root {
+  --bg: #08111f;
+  --panel: #101b2e;
+  --muted: #b5c2d4;
+  --accent: #9dceff;
+  --glass: rgba(255, 255, 255, 0.03);
+  --text: #f6f8fc;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-geist-sans), "Google Sans Text", "Google Sans", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+/* Hero / Home Page */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.hero-content {
+  width: 100%;
+}
+
+.site-title {
+  font-size: clamp(38px, 9vw, 88px);
+  margin: 0 0 8px;
+  color: var(--accent);
+  letter-spacing: -2px;
+}
+
+.site-title::after {
+  content: ';';
+  color: var(--accent);
+  opacity: 0.85;
+  margin-left: 6px;
+}
+
+.tagline {
+  color: var(--muted);
+  margin: 0 0 18px;
+  font-size: 18px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 16px;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+
+/* Mysteries Grid - styled like socials nav */
+.mysteries-grid {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.mystery-btn {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: all 0.18s;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.mystery-btn:hover {
+  color: var(--text);
+  border-color: rgba(157, 206, 255, 0.32);
+  box-shadow: 0 8px 24px rgba(65, 134, 205, 0.15);
+}
+
+.others-title {
+  color: var(--accent);
+  font-size: clamp(28px, 6vw, 52px);
+  margin: 24px 0 8px;
+  letter-spacing: -1px;
+}
+
+.devotion-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.devotion-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--glass);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.devotion-btn:hover {
+  border-color: rgba(157, 206, 255, 0.4);
+  background: rgba(157, 206, 255, 0.08);
+}
+
+.devotion-btn strong {
+  color: var(--accent);
+  font-size: 16px;
+}
+
+.devotion-btn span,
+.devotion-btn small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.devotion-btn small {
+  font-size: 11px;
+}
+
+/* Rosary Page - matching Android app layout */
+.rosary-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.rosary-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
+/* Rosary header with back link and language toggle */
+.rosary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.lang-dropdown {
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.18s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa6b2' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+.lang-dropdown:hover,
+.lang-dropdown:focus {
+  color: var(--accent);
+  border-color: rgba(157, 206, 255, 0.35);
+  outline: none;
+}
+
+.lang-dropdown option {
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* Mystery Title - top, centered, large */
+.mystery-title {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--accent);
+  margin-bottom: 24px;
+  min-height: 2em;
+}
+
+/* Prayer Label - centered, medium */
+.prayer-label {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+/* Prayer Text - scrollable container in the middle */
+.prayer-container {
+  flex: 1;
+  min-height: 200px;
+  max-height: calc(100vh - 380px);
+  overflow-y: auto;
+  background: var(--panel);
+  border-radius: 10px;
+  border: 1px solid var(--glass);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.prayer-container::before {
+  content: '';
+  display: block;
+  height: 1px;
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, rgba(157, 206, 255, 0.2), transparent);
+}
+
+.prayer-text {
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre-line;
+  color: var(--text);
+}
+
+/* Progress Bar - near bottom */
+.progress-section {
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+  transition: transform 0.3s ease;
+}
+
+.progress-text {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* Instructions - at very bottom */
+.instructions {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 16px;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 8, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 60;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal {
+  background: linear-gradient(180deg, var(--panel), #07121a);
+  max-width: 500px;
+  width: 100%;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+}
+
+.modal h3 {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 24px;
+}
+
+.modal h3::after {
+  content: ';';
+  opacity: 0.85;
+  margin-left: 4px;
+}
+
+.modal .muted {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.modal button {
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  padding: 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.modal button:hover {
+  color: var(--text);
+  border-color: rgba(157, 206, 255, 0.32);
+  box-shadow: 0 8px 24px rgba(65, 134, 205, 0.15);
+}
+
+/* Compact language control sits below the colour switch and never overlaps the title. */
+.language-menu {
+  position: fixed;
+  top: 62px;
+  right: 20px;
+  z-index: 20;
+}
+.language-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  border: 1px solid var(--glass);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.language-menu-trigger:hover, .language-menu-trigger[aria-expanded='true'] { color: var(--accent); border-color: var(--accent); }
+.language-menu-trigger svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.language-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 10px;
+  width: 188px;
+  padding: 10px;
+  border: 1px solid var(--glass);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: 0 16px 36px rgba(1, 8, 20, .2);
+}
+.language-select-wrapper { display: flex; }
+.language-select { width: 100%; border: 1px solid var(--glass); border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; padding: 6px 10px; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa6b2' d='M6 8L2 4h8z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 28px; transition: border-color .18s ease, color .18s ease; }
+.language-select:hover, .language-select:focus { border-color: var(--accent); color: var(--accent); outline: none; }
+.language-select option { background: var(--panel); color: var(--text); }
+.language-latin-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid var(--glass); padding-top: 10px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.language-latin-option input { position: absolute; opacity: 0; pointer-events: none; }
+.language-latin-switch { width: 34px; height: 20px; padding: 2px; border: 1px solid var(--glass); border-radius: 999px; background: rgba(255, 255, 255, .08); transition: background .18s ease, border-color .18s ease; }
+.language-latin-switch span { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--text); transition: transform .18s ease, background .18s ease; }
+.language-latin-option input:checked + .language-latin-switch { border-color: var(--accent); background: rgba(157, 206, 255, .16); }
+.language-latin-option input:checked + .language-latin-switch span { transform: translateX(14px); background: var(--accent); }
+
+@media (max-width: 640px) {
+  .language-menu { top: 58px; right: 14px; }
+}
+
+::selection { background: var(--accent); color: #08111f; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+@media (prefers-color-scheme: light) {
+  :root { --bg: #f5f8fc; --panel: #ffffff; --muted: #52657d; --accent: #1769b0; --glass: rgba(23, 105, 176, 0.1); --text: #10233b; }
+  .lang-dropdown option { background: var(--panel); color: var(--text); }
+  .modal { background: var(--panel); }
+}
+
+/* OpenRosary keeps its controls familiar, but uses the shared readable scale. */
+:root[data-theme='dark'] {
+  --bg: #08111f;
+  --panel: #101b2e;
+  --muted: #b5c2d4;
+  --accent: #9dceff;
+  --glass: rgba(255, 255, 255, 0.03);
+  --text: #f6f8fc;
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f8fc;
+  --panel: #ffffff;
+  --muted: #52657d;
+  --accent: #1769b0;
+  --glass: rgba(23, 105, 176, 0.1);
+  --text: #10233b;
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 20;
+  border: 1px solid var(--glass);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+body, .theme-toggle, .language-menu-trigger, .language-menu-panel, .language-choices button, .language-latin-switch, .lang-dropdown, .prayer-container, .modal { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
+::view-transition-old(root) { animation: none; }
+::view-transition-new(root) { animation: openrosary-theme-reveal .45s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes openrosary-theme-reveal { from { clip-path: circle(0 at calc(100% - 42px) 32px); } to { clip-path: circle(150% at calc(100% - 42px) 32px); } }
+@media (prefers-reduced-motion: reduce) { body, .theme-toggle, .language-menu-trigger, .language-menu-panel, .language-choices button, .language-latin-switch, .lang-dropdown, .prayer-container, .modal { transition: none; } ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }
+
+/* Language toggle animation */
+.lang-animate {
+  animation: lang-fade-in 0.35s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes lang-fade-in {
+  from {
+    opacity: 0.0;
+    transform: translateY(8px) scale(0.98);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+.site-title::after { content: none; }
+.tagline { font-size: 20px; }
+.hint { font-size: 15px; }
+.mystery-btn { font-size: 16px; }
+.others-title { font-size: clamp(31px, 6vw, 56px); }
+.devotion-btn strong { font-size: 18px; }
+.devotion-btn span { font-size: 16px; }
+.back-link, .lang-dropdown { font-size: 14px; }
+.mystery-title { font-size: 27px; }
+.prayer-label { font-size: 22px; }
+.prayer-text { font-size: 18px; line-height: 1.7; }
+.progress-text { font-size: 14px; }
+.instructions { font-size: 14px; }
+
+@media (max-width: 640px) {
+  .theme-toggle { top: 14px; right: 14px; }
+  .tagline { font-size: 18px; }
+  .hint, .mystery-btn { font-size: 15px; }
+  .mystery-title { font-size: 23px; }
+  .prayer-label { font-size: 18px; }
+  .prayer-text { font-size: 16px; }
+}
+
+/* Loading */
+.loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.2, .9, .3, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .container {
+    padding: 40px 20px;
+  }
+
+  .rosary-container {
+    padding: 20px;
+  }
+
+  .site-title {
+    font-size: 42px;
+  }
+
+  .mysteries-grid {
+    flex-direction: column;
+  }
+
+  .latin-toggle {
+    align-items: flex-start;
+  }
+
+  .mystery-btn {
+    text-align: center;
+  }
+
+  .mystery-title {
+    font-size: 20px;
+  }
+
+  .rosary-header {
+    flex-direction: row;
+  }
+
+  .prayer-label {
+    font-size: 16px;
+  }
+
+  .prayer-container {
+    padding: 16px;
+  }
+
+  .prayer-text {
+    font-size: 14px;
+  }
+}
+
+/* Mobile overrides belong last: they must win over the legacy compact scale. */
+@media (max-width: 640px) {
+  .site-title { font-size: 46px; }
+  .mystery-title { font-size: 23px; }
+  .prayer-label { font-size: 19px; }
+  .prayer-text { font-size: 17px; line-height: 1.7; }
+  .progress-text, .instructions { font-size: 14px; }
+}

@@ -1,17 +1,22 @@
 {
-  "name": "quran-turn",
-  "version": "0.7.5",
-  "description": "Read the Qur'an while your coding agent takes its turn. Local-first, offline, no account.",
+  "name": "rosary-turn",
+  "version": "0.1.0",
+  "description": "Pray the Rosary while your coding agent works. Based on Quran Turn by Rizaldy.",
   "license": "MIT",
-  "author": "Rizaldy",
-  "homepage": "https://quran.allrize.tech",
+  "author": "Rizaldy (original Quran Turn)",
+  "contributors": [
+    {
+      "name": "pinterbanget",
+      "url": "https://github.com/pinterbanget"
+    }
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rzrizaldy/quran-turn.git"
+    "url": "git+https://github.com/pinterbanget/rosary-turn.git"
   },
-  "bugs": "https://github.com/rzrizaldy/quran-turn/issues",
   "keywords": [
-    "quran",
+    "rosary",
+    "openrosary",
     "claude-code",
     "codex",
     "hooks",
@@ -20,27 +25,30 @@
   ],
   "type": "module",
   "bin": {
-    "quran-turn": "bin/quran-turn"
+    "rosary-turn": "bin/rosary-turn"
   },
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "verify": "node scripts/verify-quran.mjs",
-    "verify:remote": "node scripts/verify-quran.mjs --remote",
-    "test": "node --test",
-    "start": "node bin/quran-turn serve"
+    "test": "node --test test/rosary-turn.test.mjs",
+    "verify": "node scripts/verify.mjs",
+    "start": "node bin/rosary-turn serve"
   },
   "files": [
-    "bin",
+    "bin/rosary-turn",
     "src",
     "app",
-    "data",
+    "vendor/openrosary",
     "hooks",
     ".claude-plugin",
     ".codex-plugin",
-    "scripts",
+    ".agents/plugins",
+    "scripts/verify.mjs",
     "native",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "NOTICE.md",
+    "PRODUCT.md",
+    "DESIGN.md"
   ]
 }

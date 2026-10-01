@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Quran Turn</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="reader.css">
+<script src="/data/quran-data.js"></script>
+<script type="module" src="reader.js"></script>
+</head>
+<body>
+<main class="frame">
+  <header class="bar">
+    <span class="wordmark">QURAN TURN</span>
+    <div class="bar-right">
+      <button type="button" class="float-btn" id="float-btn" hidden title="Float: a small always-on-top ayah card (F)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor"/></svg>Float
+      </button>
+      <div class="status" id="status" data-status="idle" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span><span id="status-text">Idle</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" hidden>
+    <div class="banner-text">
+      <span class="banner-title" id="banner-title"></span>
+      <span class="banner-meta" id="banner-meta"></span>
+    </div>
+    <div class="banner-actions">
+      <button type="button" class="banner-btn banner-btn-quiet" id="expand-btn" title="Open the reader again">Open</button>
+      <button type="button" class="banner-btn" id="back-btn" hidden>Back to Claude</button>
+      <kbd class="key-hint" id="back-hint" hidden>space</kbd>
+    </div>
+  </div>
+
+  <section class="stage" id="stage">
+    <div class="stage-inner">
+      <div class="surah">
+        <div class="surah-ar" id="surah-ar" lang="ar" dir="rtl"></div>
+        <div class="surah-ref" id="surah-ref"></div>
+      </div>
+      <div class="rule" aria-hidden="true">
+        <span></span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>
+        <span></span>
+      </div>
+      <div class="ayah" lang="ar" dir="rtl">
+        <p class="ayah-text" id="ayah-text"></p>
+        <span class="ayah-end" id="ayah-end" aria-hidden="true"></span>
+      </div>
+      <p class="error" id="error" hidden></p>
+    </div>
+  </section>
+
+  <nav class="nav" aria-label="Ayah navigation">
+    <button type="button" id="next" class="btn btn-primary" title="Next ayah (← or j)">← Next</button>
+    <button type="button" id="prev" class="btn" title="Previous ayah (→ or k)">Previous →</button>
+  </nav>
+
+  <footer class="foot">
+    <button type="button" class="foot-link" id="open-jump" title="Go to surah or ayah (g)"><span id="counter">—</span></button>
+    <span class="verified" id="verified" hidden title="Text matches the pinned SHA-256 of Tanzil Uthmani">Tanzil ✓</span>
+    <a class="support" id="support" target="_blank" rel="noopener noreferrer">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>Support
+    </a>
+  </footer>
+  <a class="site-note" id="site-note" target="_blank" rel="noopener noreferrer">visit quran.allrize.tech for updates<span id="version"></span></a>
+
+  <div class="sheet" id="jump" hidden role="dialog" aria-modal="true" aria-labelledby="jump-title">
+    <header class="bar">
+      <span class="wordmark" id="jump-title">GO TO</span>
+      <button type="button" class="btn btn-small" id="close-jump">Close</button>
+    </header>
+    <form class="jump-fields" id="jump-form" role="search">
+      <label class="field grow"><span id="jump-label">Surah, juz, ayah, page or Arabic words</span>
+        <input id="jump-q" type="search" placeholder="kahfi · juz 30 · 2:255 · hal 50 · الرحمن" autocomplete="off" spellcheck="false" dir="auto"></label>
+    </form>
+    <div class="quick" id="quick" aria-label="Quick starts"></div>
+    <div class="browse" id="browse" role="tablist" aria-label="Browse">
+      <button type="button" role="tab" data-browse="surah" aria-selected="true">Surah</button>
+      <button type="button" role="tab" data-browse="juz" aria-selected="false">Juz</button>
+    </div>
+    <ul class="surah-list" id="jump-results" aria-live="polite"></ul>
+    <footer class="foot"><span id="jump-count">114 surahs · 30 juz</span><span>enter · esc</span></footer>
+  </div>
+</main>
+<noscript>Quran Turn needs JavaScript to display the text.</noscript>
+</body>
+</html>

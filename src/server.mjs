@@ -2,12 +2,13 @@
 // state while it runs: hooks POST their events here instead of touching files.
 import { readFile } from 'node:fs/promises';
 import http from 'node:http';
-import { extname, join, normalize } from 'node:path';
-import { ROOT, VERSION, loadMeta } from './quran.mjs';
-import { applyHook, logError, readJson, setPosition, validPosition } from './state.mjs';
+import { extname, join, normalize, relative, isAbsolute } from 'node:path';
+import { ROOT, VERSION } from './rosary.mjs';
+import { validPosition } from '../app/rosary-core.js';
+import { applyHook, ensureDailyPosition, logError, readJson, setPosition, writeJson } from './state.mjs';
 import * as desktop from './window.mjs';
 
-export const DEFAULT_PORT = Number(process.env.QURAN_TURN_PORT) || 47114;
+export const DEFAULT_PORT = Number(process.env.ROSARY_TURN_PORT) || 47115;
 const IDLE_EXIT_MS = 30 * 60 * 1000;
 const REOPEN_GUARD_MS = 15 * 1000;
 
@@ -22,12 +23,12 @@ const MIME = {
 };
 
 // Only these directories are ever served.
-const STATIC = { '/data/': join(ROOT, 'data'), '/': join(ROOT, 'app') };
+const STATIC = { '/': join(ROOT, 'app') };
 
 export function snapshot() {
   const agent = readJson('agent.json');
   return {
-    position: readJson('state.json'),
+    position: ensureDailyPosition(),
     agent,
     config: readJson('config.json'),
     // Whether the reader can offer "Back to Claude/Codex" (macOS + a known host app).
@@ -40,13 +41,11 @@ export function snapshot() {
 // win: window control, injectable for tests (see src/window.mjs).
 // onShutdown: what /api/shutdown does after closing (a newer version takes over).
 export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = true, onShutdown = () => process.exit(0) } = {}) {
-  const meta = loadMeta();
-  const counts = meta.Sura.map((s) => s[1] ?? 0);
   // Connected readers (SSE responses) → 'window' | 'notch'
   const clients = new Map();
   let lastActivity = Date.now();
   let lastOpen = 0;
-  const url = `http://127.0.0.1:${port}/`;
+  let url = `http://127.0.0.1:${port}/`;
 
   const countOf = (kind) => [...clients.values()].filter((k) => k === kind).length;
   // Which surface the reader uses: the notch where a host for it exists
@@ -178,13 +177,26 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
         const body = await readBody(req);
 
         if (pathname === '/api/position') {
-          const pos = validPosition(body, counts);
+          const pos = validPosition(body);
           if (!pos) return json(res, 400, { error: 'invalid position' });
-          setPosition(pos, counts);
+          setPosition(pos);
+          broadcast();
+          return json(res, 200, current());
+        }
+        if (pathname === '/api/config') {
+          const config = readJson('config.json');
+          if (body.timeZone !== undefined) {
+            try { new Intl.DateTimeFormat('en', { timeZone: body.timeZone }).format(); }
+            catch { return json(res, 400, { error: 'invalid timezone' }); }
+            config.timeZone = body.timeZone;
+          }
+          writeJson('config.json', config);
           broadcast();
           return json(res, 200, current());
         }
         if (pathname === '/api/hook') {
+          if (!['start', 'needs-you', 'resume', 'stop'].includes(body.event)) return json(res, 400, { error: 'invalid hook event' });
+          if (!readJson('config.json').enabled) return json(res, 200, { ok: true, clients: clients.size });
           const before = readJson('agent.json').status;
           const after = applyHook(body.event, { agent: body.agent, session_id: body.session_id, host: body.host }).status;
           broadcast();
@@ -243,7 +255,7 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
       }
 
       if (req.method !== 'GET') return json(res, 405, { error: 'method not allowed' });
-      if (pathname === '/api/health') return json(res, 200, { ok: true, app: 'quran-turn', version: VERSION, clients: clients.size });
+      if (pathname === '/api/health') return json(res, 200, { ok: true, app: 'rosary-turn', version: VERSION, clients: clients.size });
       if (pathname === '/api/state') return json(res, 200, current());
       if (pathname === '/api/surface') {
         // Long poll: answer as soon as the state is newer than `since` (or after 25 s).
@@ -281,11 +293,12 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
       }
 
       // Static files
-      const prefix = pathname.startsWith('/data/') ? '/data/' : '/';
+      const prefix = '/';
       const base = STATIC[prefix];
       const rel = pathname === '/' ? 'index.html' : decodeURIComponent(pathname.slice(prefix.length));
       const file = normalize(join(base, rel));
-      if (!file.startsWith(base + '/') || !MIME[extname(file)]) return json(res, 404, { error: 'not found' });
+      const relFile = relative(base, file);
+      if (relFile.startsWith('..') || isAbsolute(relFile) || !MIME[extname(file)]) return json(res, 404, { error: 'not found' });
       const bytes = await readFile(file);
       res.writeHead(200, { 'content-type': MIME[extname(file)], 'cache-control': 'no-cache' });
       res.end(bytes);
@@ -305,6 +318,10 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);
-    server.listen(port, '127.0.0.1', () => resolve({ server, url, clients, close: () => { clearInterval(heartbeat); for (const c of clients.keys()) c.end(); for (const w of surfaceWaiters) w(); server.close(); } }));
+    server.listen(port, '127.0.0.1', () => {
+      port = server.address().port;
+      url = `http://127.0.0.1:${port}/`;
+      resolve({ server, url, clients, close: () => { clearInterval(heartbeat); for (const c of clients.keys()) c.end(); for (const w of surfaceWaiters) w(); server.close(); } });
+    });
   });
 }
