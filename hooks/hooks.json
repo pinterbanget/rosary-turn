@@ -1,5 +1,5 @@
 {
-  "description": "Rosary Turn: open while the agent works, pause when needed, save progress when done. Original session design by Rizaldy.",
+  "description": "Rosary Turn: open while the agent works, step aside when it needs you, save progress when done. Original session design by Rizaldy.",
   "hooks": {
     "UserPromptSubmit": [
       {
