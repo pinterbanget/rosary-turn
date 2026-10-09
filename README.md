@@ -77,7 +77,7 @@ node bin/rosary-turn surface notch
 node bin/rosary-turn surface auto
 ```
 
-On macOS, the default surface is the inherited native curtain when macOS 12+ and Swift are available. Windows `surface notch` uses the inherited experimental Edge/PowerShell helper. Regular windows on Windows/Linux show session status but do not automatically focus the agent; app switching remains macOS-only. Native macOS operation requires testing on a Mac before a public release.
+On macOS, the default surface is the inherited native curtain when macOS 12+ and Swift are available. Windows `surface notch` uses the inherited experimental Edge/PowerShell helper. Regular windows on Windows/Linux show session status but do not automatically focus the agent; app switching remains macOS-only.
 
 State lives in `~/.rosary-turn`: `state.json`, `agent.json`, `config.json`, and `sessions.jsonl`. `ROSARY_TURN_HOME` and `ROSARY_TURN_PORT` override the directory and port. This cannot overwrite Quran Turn's state. `ROSARY_TURN_NO_WINDOW=1` suppresses native/browser launches for testing; `ROSARY_TURN_NO_SERVER=1` uses file-only hook fallback.
 
